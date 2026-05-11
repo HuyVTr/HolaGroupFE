@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import StaffCreate from './StaffCreate'; // 👉 Nhớ đảm bảo file StaffCreate.jsx nằm cùng thư mục nhé
+import { useNavigate } from 'react-router-dom';
 
 const StaffManagement = () => {
-  // Dữ liệu mẫu y hệt thiết kế
+  const navigate = useNavigate();
+
   const [staffList, setStaffList] = useState([
     { id: 1, name: 'Trần Anh Huy', email: 'huy.ta@holagroup.vn', initials: 'TH', bgColor: 'bg-indigo-100 text-indigo-700', dept: 'Quản trị hệ thống', role: 'Admin', status: 'Hoạt động', lastLogin: '15 phút trước' },
     { id: 2, name: 'Lê Thị Minh', email: 'minh.lt@holagroup.vn', avatar: 'https://i.pravatar.cc/150?img=5', dept: 'Kinh doanh', role: 'Sales', status: 'Hoạt động', lastLogin: '2 giờ trước' },
@@ -10,12 +11,7 @@ const StaffManagement = () => {
     { id: 4, name: 'Phạm Mỹ Linh', email: 'linh.pm@holagroup.vn', avatar: 'https://i.pravatar.cc/150?img=9', dept: 'Kế toán', role: 'Accounting', status: 'Hoạt động', lastLogin: 'Hôm qua' },
   ]);
 
-  // State để mở dropdown chọn Role
   const [openRoleMenu, setOpenRoleMenu] = useState(null);
-  
-  // State để chuyển đổi giữa Danh sách và Form thêm mới
-  const [isCreating, setIsCreating] = useState(false);
-
   const roles = ['Admin', 'Sales', 'Warehouse', 'Accounting'];
 
   const handleRoleChange = (id, newRole) => {
@@ -23,16 +19,10 @@ const StaffManagement = () => {
     setOpenRoleMenu(null);
   };
 
-  // NẾU ĐANG BẤM NÚT THÊM NHÂN VIÊN THÌ HIỂN THỊ COMPONENT STAFF CREATE
-  if (isCreating) {
-    return <StaffCreate onBack={() => setIsCreating(false)} />;
-  }
-
-  // NẾU KHÔNG THÌ HIỂN THỊ DANH SÁCH BÌNH THƯỜNG
   return (
     <div className="w-full bg-[#f8fafc] min-h-screen p-6 font-sans text-[#191c1e]">
       
-      {/* 1. Tiêu đề & Nút Thêm mới */}
+      {/* 1. Tiêu đề & Nút Thêm mới (Gọi navigate qua App) */}
       <div className="flex justify-between items-start mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[#0f172a] mb-2 tracking-tight">Quản lý Nhân sự & Phân quyền</h1>
@@ -41,9 +31,8 @@ const StaffManagement = () => {
           </p>
         </div>
         
-        {/* NÚT BẤM ĐỂ CHUYỂN TRANG NẰM Ở ĐÂY */}
         <button 
-          onClick={() => setIsCreating(true)}
+          onClick={() => navigate('/home/staffs/add')}
           className="bg-[#1e3a8a] hover:bg-blue-900 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-all flex items-center gap-2"
         >
           <span>👤+</span> Thêm nhân viên mới
@@ -60,7 +49,7 @@ const StaffManagement = () => {
           />
           <span className="absolute left-3 top-2.5 opacity-40">🔍</span>
         </div>
-        <select className="bg-gray-100 border-none text-gray-600 text-sm rounded-lg px-4 py-2.5 outline-none font-medium appearance-none pr-10 relative">
+        <select className="bg-gray-100 border-none text-gray-600 text-sm rounded-lg px-4 py-2.5 outline-none font-medium appearance-none pr-10">
           <option>Tất cả phòng ban</option>
           <option>Kinh doanh</option>
           <option>Kế toán</option>
@@ -103,7 +92,6 @@ const StaffManagement = () => {
                 </td>
                 <td className="px-6 py-4 font-medium text-gray-700">{staff.dept}</td>
                 
-                {/* Cột Vai trò + Popup Chọn quyền */}
                 <td className="px-6 py-4 relative">
                   <div 
                     onClick={() => setOpenRoleMenu(openRoleMenu === staff.id ? null : staff.id)}
@@ -112,7 +100,6 @@ const StaffManagement = () => {
                     {staff.role} <span>✎</span>
                   </div>
 
-                  {/* Dropdown Menu */}
                   {openRoleMenu === staff.id && (
                     <div className="absolute top-12 left-6 bg-white border border-gray-100 shadow-xl rounded-xl w-48 py-2 z-50">
                       <p className="text-[10px] font-bold text-gray-400 uppercase px-4 mb-1">CHỌN VAI TRÒ</p>
@@ -157,18 +144,16 @@ const StaffManagement = () => {
         </div>
       </div>
 
-      {/* 4. Thẻ Thống Kê Dưới Cùng (Bottom Cards) */}
+      {/* Thẻ Thống Kê Dưới Cùng */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
         <div className="bg-[#1e3a8a] text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-2">TỔNG NHÂN SỰ</p>
-            <h2 className="text-5xl font-bold mb-3">142</h2>
+            <h2 className="text-5xl font-bold mb-3">{staffList.length}</h2>
             <p className="text-xs font-medium opacity-90 flex items-center gap-1">
               <span>↗</span> +4 nhân viên trong tháng này
             </p>
           </div>
-          {/* Decorative shapes behind text */}
           <div className="absolute -right-4 -bottom-4 opacity-10 flex">
             <span className="text-8xl">👤</span>
             <span className="text-6xl -ml-6 mt-4">👤</span>
@@ -200,7 +185,6 @@ const StaffManagement = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

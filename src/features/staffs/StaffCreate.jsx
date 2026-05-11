@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 
-const StaffCreate = ({ onBack }) => {
+const StaffCreate = () => {
+  const navigate = useNavigate();
   const [role, setRole] = useState('Nhân viên');
   const [showPassword, setShowPassword] = useState(false);
   const [requirePassChange, setRequirePassChange] = useState(true);
@@ -8,8 +10,8 @@ const StaffCreate = ({ onBack }) => {
   return (
     <div className="w-full bg-[#f8fafc] min-h-screen p-6 font-sans text-[#191c1e]">
       
-      {/* 1. Header */}
-      <div className="flex justify-between items-start mb-8">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8 pt-4">
         <div>
           <h1 className="text-3xl font-bold text-[#0f172a] mb-2">Thêm nhân viên mới</h1>
           <p className="text-[#64748b] text-sm max-w-lg">
@@ -22,13 +24,9 @@ const StaffCreate = ({ onBack }) => {
         </div>
       </div>
 
-      {/* 2. Form Content (Grid 1/3 - 2/3) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* === CỘT TRÁI (Ảnh đại diện & Công việc) === */}
+        {/* CỘT TRÁI */}
         <div className="flex flex-col gap-6">
-          
-          {/* Card Ảnh đại diện */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50 flex flex-col items-center justify-center text-center h-full min-h-[280px]">
             <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 border border-dashed border-gray-300 cursor-pointer hover:bg-gray-200 transition">
               <span className="text-3xl text-gray-400">📷</span>
@@ -37,7 +35,6 @@ const StaffCreate = ({ onBack }) => {
             <p className="text-xs text-gray-400">Định dạng JPG, PNG. Tối đa 2MB.</p>
           </div>
 
-          {/* Card Thông tin công việc */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-1 h-5 bg-[#1e3a8a] rounded-full"></div>
@@ -71,12 +68,9 @@ const StaffCreate = ({ onBack }) => {
           </div>
         </div>
 
-        {/* === CỘT PHẢI (Cá nhân & Tài khoản) === */}
+        {/* CỘT PHẢI */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Card Thông tin cá nhân */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50 relative overflow-hidden">
-            {/* Hình mờ trang trí góc trên phải */}
             <div className="absolute -top-4 -right-4 opacity-5">
               <svg width="120" height="120" viewBox="0 0 24 24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
             </div>
@@ -103,7 +97,6 @@ const StaffCreate = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Card Thiết lập tài khoản */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-1 h-5 bg-[#1e3a8a] rounded-full"></div>
@@ -135,14 +128,13 @@ const StaffCreate = ({ onBack }) => {
               <span className="text-sm font-semibold text-[#0f172a]">Yêu cầu đổi mật khẩu ở lần đăng nhập đầu tiên</span>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* 3. Footer Buttons */}
+      {/* Footer Buttons */}
       <div className="flex justify-end gap-4 mt-8">
         <button 
-          onClick={onBack}
+          onClick={() => navigate('/home/staff')}
           className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-3 rounded-xl text-sm font-bold transition-colors"
         >
           Hủy bỏ
@@ -151,7 +143,6 @@ const StaffCreate = ({ onBack }) => {
           <span>👤+</span> Thêm nhân viên
         </button>
       </div>
-
     </div>
   );
 };

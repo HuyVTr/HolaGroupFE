@@ -6,6 +6,7 @@ import MainLayout from './components/Layout/MainLayout';
 
 // Sales & Admin (Từ GitHub - Đã Pull về)
 import CustomerList from './features/sales/CustomerList';
+import CustomerCreate from './features/sales/CustomerCreate';
 import OrderManager from './features/admin/pages/OrderManagement';
 
 // Kế toán (Accounting Module - Phát triển cục bộ)
@@ -19,7 +20,13 @@ import AccountingReport from './features/accounting/reports/accounting/index.jsx
 import AccountingLayout from './features/accounting/components/Layout/AccountingLayout';
 import TransactionDetail from './features/accounting/dashboard/TransactionDetail.jsx';
 import StaffManagement from './features/staffs/StaffManagement.jsx';
-
+import StaffCreate from './features/staffs/StaffCreate.jsx';
+import ProductManagement from './features/admin/products/ProductManagement.jsx';
+import AddProduct from './features/admin/products/AddProduct.jsx';
+import CategoryManagement from './features/admin/category/CategoryManagement.jsx';
+import AddCategory from './features/admin/category/AddCategory.jsx';
+import PriceManagement from './features/admin/prices/PriceManagement.jsx';
+import PriceCreate from './features/admin/prices/AddPrice.jsx';
 function App() {
   return (
     <Routes>
@@ -32,8 +39,16 @@ function App() {
         
         {/* Tuyến đường con: /home/customers và /home/orders */}
         <Route path="customers" element={<CustomerList />} />
+        <Route path="customers/add" element={<CustomerCreate />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="staffs" element={<StaffManagement />} />
+        <Route path="staffs/add" element={<StaffCreate />} />
+        <Route path="products" element={<ProductManagement />} />
+        <Route path="products/add" element={<AddProduct />} />
+        <Route path="categories" element={<CategoryManagement />} />
+        <Route path="categories/add" element={<AddCategory />} />
+        <Route path="prices" element={<PriceManagement />} />
+        <Route path="prices/add" element={<PriceCreate />} />
       </Route>
       
       {/* Tuyến đường Kế toán sử dụng AccountingLayout (Phát triển cục bộ) */}

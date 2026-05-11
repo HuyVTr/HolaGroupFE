@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
+// 1. Import thêm useNavigate và Link từ react-router-dom
+import { useNavigate, Link } from 'react-router-dom';
 
-const CustomerCreate = ({ onBack }) => {
+const CustomerCreate = () => {
+  // 2. Khởi tạo hàm chuyển hướng
+  const navigate = useNavigate();
+
   // State quản lý UI form
   const [customerType, setCustomerType] = useState('Cá nhân');
   const [membership, setMembership] = useState('VIP');
+
+  // Hàm xử lý khi bấm Lưu
+  const handleSave = () => {
+    // Trong thực tế, bạn sẽ gọi API ở đây (ví dụ: axios.post(...))
+    alert("Đã thêm khách hàng mới thành công!");
+    
+    // Sau khi lưu xong thì tự động quay về trang danh sách
+    navigate('/home/customers');
+  };
 
   return (
     <div className="w-full font-sans text-[#191c1e] bg-[#f8fafc] min-h-screen pb-10">
@@ -12,18 +26,28 @@ const CustomerCreate = ({ onBack }) => {
       <div className="flex justify-between items-end mb-8 pt-4">
         <div>
           <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-2 uppercase flex gap-2">
-            <span>DANH MỤC</span> <span>›</span> <span>KHÁCH HÀNG</span>
+            <span>DANH MỤC</span> 
+            <span>›</span> 
+            {/* Sử dụng Link để có thể click quay lại */}
+            <Link to="/home/customers" className="hover:text-[#00288E] transition-colors">KHÁCH HÀNG</Link>
+            <span>›</span> 
+            <span className="text-[#00288E]">THÊM MỚI</span>
           </div>
           <h1 className="text-3xl font-manrope font-bold text-[#00288E]">Thêm mới khách hàng</h1>
         </div>
         <div className="flex gap-3">
+          {/* 3. Gắn sự kiện navigate vào nút Hủy bỏ */}
           <button 
-            onClick={onBack}
+            onClick={() => navigate('/home/customers')}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
           >
             Hủy bỏ
           </button>
-          <button className="bg-[#00288E] hover:bg-[#1e40af] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors">
+          {/* Gắn sự kiện handleSave vào nút Lưu thông tin */}
+          <button 
+            onClick={handleSave}
+            className="bg-[#00288E] hover:bg-[#1e40af] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors"
+          >
             Lưu thông tin
           </button>
         </div>
@@ -72,17 +96,7 @@ const CustomerCreate = ({ onBack }) => {
               ></textarea>
             </div>
 
-            {/* Giả lập Bản đồ */}
-            <div className="w-full h-48 bg-slate-600 rounded-2xl mt-6 relative overflow-hidden flex items-center justify-center">
-              <div 
-                className="absolute inset-0 bg-cover bg-center opacity-60" 
-                style={{backgroundImage: 'url("https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1000&auto=format&fit=crop")'}}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent"></div>
-              <button className="relative z-10 bg-white text-[#00288E] px-6 py-2.5 rounded-full text-xs font-bold shadow-lg hover:scale-105 transition-transform">
-                Gắn vị trí bản đồ
-              </button>
-            </div>
+           
           </div>
 
         </div>
@@ -189,29 +203,7 @@ const CustomerCreate = ({ onBack }) => {
       </div>
 
       {/* Footer Badges */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        <div className="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-gray-50">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg">✓</div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">XÁC THỰC</p>
-            <p className="text-sm font-bold text-[#0f172a]">Tự động qua eKYC</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-gray-50">
-          <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-lg">🛡️</div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">BẢO MẬT</p>
-            <p className="text-sm font-bold text-[#0f172a]">Mã hóa AES-256</p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm border border-gray-50">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">⚡</div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">ĐỒNG BỘ</p>
-            <p className="text-sm font-bold text-[#0f172a]">Real-time CRM</p>
-          </div>
-        </div>
-      </div>
+    
 
     </div>
   );
