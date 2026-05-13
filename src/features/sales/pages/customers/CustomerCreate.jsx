@@ -50,7 +50,7 @@ const CustomerCreate = () => {
           <div className="xl:flex-[2] flex flex-col gap-6">
           
           {/* Box Thông tin định danh */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300">
             <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2 mb-6">
               <span className="text-[#00288E]">👤</span> Thông tin định danh
             </h3>
@@ -73,7 +73,7 @@ const CustomerCreate = () => {
           </div>
 
           {/* Box Địa chỉ liên lạc */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300">
             <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2 mb-6">
               <span className="text-[#00288E]">📍</span> Địa chỉ liên lạc
             </h3>
@@ -96,7 +96,7 @@ const CustomerCreate = () => {
         <div className="xl:flex-[1] flex flex-col gap-6">
           
           {/* Box Phân loại đối tượng */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300">
             <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2 mb-6">
               <span className="text-[#00288E]">🏷️</span> Phân loại đối tượng
             </h3>
@@ -175,7 +175,7 @@ const CustomerCreate = () => {
           </div>
 
           {/* Box Ghi chú */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300">
             <h3 className="text-lg font-bold text-[#0f172a] flex items-center gap-2 mb-6">
               <span className="text-[#00288E]">📝</span> Ghi chú nội bộ
             </h3>

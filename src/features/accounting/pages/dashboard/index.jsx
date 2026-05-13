@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import accountingService from '../services/accountingService';
-import { useToast } from '../components/Common/AccountingToast';
-import { exportToPDF } from '../utils/exportUtils';
+import accountingService from '../../services/accountingService';
+import { useToast } from '../../components/Common/AccountingToast';
+import { exportToPDF } from '../../utils/exportUtils';
+import '../../styles/accounting.css';
 
 // Import components
-import DashboardStat from '../components/Stats/DashboardStat';
-import RevenueAreaChart from '../components/Charts/RevenueAreaChart';
-import DailyActivityGrid from '../components/Charts/DailyActivityGrid';
-import NotificationFeed from '../components/Notifications/NotificationFeed';
+import DashboardStat from '../../components/Stats/DashboardStat';
+import RevenueAreaChart from '../../components/Charts/RevenueAreaChart';
+import DailyActivityGrid from '../../components/Charts/DailyActivityGrid';
+import NotificationFeed from '../../components/Notifications/NotificationFeed';
 import { 
   RevenueIcon, DebtIcon, InvoiceIcon, WalletIcon, DownloadIcon 
-} from '../components/Icons/AccountingIcons';
-import PrintableDashboardTemplate from '../components/Print/PrintableDashboardTemplate';
+} from '../../components/Icons/AccountingIcons';
+import PrintableDashboardTemplate from '../../components/Print/PrintableDashboardTemplate';
 
 const AccountingDashboard = () => {
   const { showToast } = useToast();

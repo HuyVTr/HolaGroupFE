@@ -1,16 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import salesService from '../../services/salesService';
 
 const CustomerList = () => {
   const navigate = useNavigate();
-  
-  // 1. Dữ liệu: Chuyển đổi thành state để có thể cập nhật/xóa động
-  const [customers, setCustomers] = useState([
-    { id: 'NN', name: 'Nguyễn Nam Anh', phone: '0902 123 456', email: 'namanh.ng@company.vn', group: 'VIP', groupColor: 'bg-[#ffdbce] text-[#802a00]', revenue: '450,200,000 đ', status: 'Hoạt động', isActive: true, avatarBg: 'bg-blue-100 text-[#00288E]' },
-    { id: 'PT', name: 'Phạm Thị Thanh', phone: '0915 789 012', email: 'thanh.pham@gmail.com', group: 'DOANH NGHIỆP', groupColor: 'bg-blue-100 text-blue-800', revenue: '125,000,000 đ', status: 'Hoạt động', isActive: true, avatarBg: 'bg-gray-200 text-gray-800' },
-    { id: 'LH', name: 'Le Hoang Nam', phone: '0888 666 999', email: 'hoangnam.le@outlook.com', group: 'GOLD', groupColor: 'bg-[#ffdbce] text-[#802a00]', revenue: '82,450,000 đ', status: 'Ngoại tuyến', isActive: false, avatarBg: 'bg-blue-100 text-[#00288E]' },
-    { id: 'TM', name: 'Trần Minh Quân', phone: '0977 444 222', email: 'quan.tm@edu.vn', group: 'TIÊU CHUẨN', groupColor: 'bg-gray-200 text-gray-700', revenue: '12,900,000 đ', status: 'Hoạt động', isActive: true, avatarBg: 'bg-gray-200 text-gray-800' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState([]);
+
+  // 1. Dữ liệu: Gọi từ salesService và map sang định dạng UI
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        const data = await salesService.getCustomers();
+        const mapped = data.map(c => ({
+          id: (c.firstName?.substring(0, 1) || '') + (c.lastName?.substring(0, 1) || 'KH'),
+          customerID: c.customerID,
+          name: c.companyName || `${c.lastName || ''} ${c.firstName || ''}`,
+          phone: c.phoneNumber || 'N/A',
+          email: c.email || 'N/A',
+          group: c.status === 'ACTIVE' ? 'VIP' : 'TIÊU CHUẨN',
+          groupColor: c.status === 'ACTIVE' ? 'bg-[#ffdbce] text-[#802a00]' : 'bg-gray-200 text-gray-700',
+          revenue: '0 đ', 
+          status: c.status === 'ACTIVE' ? 'Hoạt động' : 'Ngoại tuyến',
+          isActive: c.status === 'ACTIVE',
+          avatarBg: c.status === 'ACTIVE' ? 'bg-blue-100 text-[#00288E]' : 'bg-gray-200 text-gray-800'
+        }));
+        setCustomers(mapped);
+      } catch (err) {
+        console.error("Lỗi khi tải khách hàng:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   // --- 2. TRẠNG THÁI MODAL & TOAST ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -35,7 +59,7 @@ const CustomerList = () => {
 
   const confirmDelete = () => {
     setShowDeleteModal(false);
-    const updatedCustomers = customers.filter(c => c.id !== targetCustomer.id);
+    const updatedCustomers = customers.filter(c => c.customerID !== targetCustomer.customerID);
     setCustomers(updatedCustomers);
     showToastMsg(`Đã xóa khách hàng "${targetCustomer.name}" thành công!`);
     setTargetCustomer(null);
@@ -49,7 +73,7 @@ const CustomerList = () => {
 
   const saveEditCustomer = () => {
     const updatedCustomers = customers.map(c => 
-      c.id === editFormData.id ? editFormData : c
+      c.customerID === editFormData.customerID ? editFormData : c
     );
     setCustomers(updatedCustomers);
     setShowEditModal(false);
@@ -83,27 +107,27 @@ const CustomerList = () => {
 
           {/* Thẻ Thống kê */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 shrink-0 px-2 md:px-0">
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-[#444653] font-semibold mb-2">TỔNG KHÁCH HÀNG</p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
+              <p className="text-xs text-[#444653] font-semibold mb-2 uppercase tracking-wider">TỔNG KHÁCH HÀNG</p>
               <h2 className="text-3xl font-bold text-[#00288E] mb-2">{customers.length}</h2>
               <p className="text-xs text-green-600 flex items-center gap-1 font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span> +12% tháng này
               </p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-[#444653] font-semibold mb-2">KHÁCH HÀNG VIP</p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
+              <p className="text-xs text-[#444653] font-semibold mb-2 uppercase tracking-wider">KHÁCH HÀNG VIP</p>
               <h2 className="text-3xl font-bold text-[#00288E] mb-2">142</h2>
               <p className="text-xs text-blue-600 flex items-center gap-1 font-medium">
                 <span className="w-2 h-2 bg-blue-500 rounded-full inline-block"></span> Top 10% doanh thu
               </p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-[#444653] font-semibold mb-2">DOANH THU TRUNG BÌNH</p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
+              <p className="text-xs text-[#444653] font-semibold mb-2 uppercase tracking-wider">DOANH THU TRUNG BÌNH</p>
               <h2 className="text-3xl font-bold text-[#00288E] mb-2">14.2M</h2>
-              <p className="text-xs text-[#444653] font-medium">VNĐ / Mỗi khách hàng</p>
+              <p className="text-xs text-[#444653] font-medium uppercase tracking-wider">VNĐ / Mỗi khách hàng</p>
             </div>
-            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-              <p className="text-xs text-[#444653] font-semibold mb-2">TỶ LỆ GIỮ CHÂN</p>
+            <div className="bg-white p-6 rounded-2xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
+              <p className="text-xs text-[#444653] font-semibold mb-2 uppercase tracking-wider">TỶ LỆ GIỮ CHÂN</p>
               <h2 className="text-3xl font-bold text-[#00288E] mb-4">92%</h2>
               <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-[#00288E] w-[92%] h-full"></div>
@@ -112,7 +136,7 @@ const CustomerList = () => {
           </div>
 
           {/* Bảng dữ liệu */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-2 md:mx-0 flex flex-col">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300 overflow-hidden mx-2 md:mx-0 flex flex-col">
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div className="flex gap-2">
                 <button className="px-4 py-2 bg-blue-50 text-[#00288E] text-sm font-medium rounded-lg">Tất cả</button>

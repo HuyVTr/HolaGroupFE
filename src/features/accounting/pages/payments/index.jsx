@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useToast } from '../components/Common/AccountingToast';
-import accountingService from '../services/accountingService';
-import InvoiceTable from '../components/Tables/InvoiceTable';
-import PaymentHistoryTable from '../components/Tables/PaymentHistoryTable';
-import PaymentConfirmationModal from '../components/Modals/PaymentConfirmationModal';
-import PrintableInvoiceTemplate from '../components/Print/PrintableInvoiceTemplate';
-import '../styles/accounting.css';
+import { useToast } from '../../components/Common/AccountingToast';
+import accountingService from '../../services/accountingService';
+import InvoiceTable from '../../components/Tables/InvoiceTable';
+import PaymentHistoryTable from '../../components/Tables/PaymentHistoryTable';
+import PaymentConfirmationModal from '../../components/Modals/PaymentConfirmationModal';
+import PrintableInvoiceTemplate from '../../components/Print/PrintableInvoiceTemplate';
+import '../../styles/accounting.css';
 
 const PaymentManagement = () => {
   const location = useLocation();

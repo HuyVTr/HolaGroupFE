@@ -1,44 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import salesService from '../../services/salesService';
 
 const ProductManagement = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-  // --- 1. DỮ LIỆU SẢN PHẨM ---
-  const [products, setProducts] = useState([
-    { 
-      id: 'SL-77291', name: 'Chronos Elite V2', 
-      category: 'HÀNG XA XỈ', price: '42,500,000', 
-      stock: 142, status: 'Còn hàng' 
-    },
-    { 
-      id: 'SL-99012', name: 'Arch-Vision Tablet Pro', 
-      category: 'CÔNG NGHỆ DOANH NGHIỆP', price: '18,900,000', 
-      stock: 8, status: 'Sắp hết hàng' 
-    },
-    { 
-      id: 'SL-11234', name: 'Nexus Core Server 5k', 
-      category: 'PHẦN CỨNG', price: '125,000,000', 
-      stock: 142, status: 'Còn hàng' 
-    },
-    { 
-      id: 'SL-44567', name: 'Office Brew Master', 
-      category: 'TIỆN NGHI', price: '4,200,000', 
-      stock: 8, status: 'Sắp hết hàng' 
-    },
-  ]);
+  // --- 1. DỮ LIỆU SẢN PHẨM: Gọi từ salesService ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [productsData, categoriesData] = await Promise.all([
+          salesService.getProducts(),
+          salesService.getCategories()
+        ]);
+        
+        setCategories(categoriesData);
 
-  const [activeTab, setActiveTab] = useState('Danh mục');
-  const topTabs = ['Danh mục'];
+        const mapped = productsData.map(p => {
+          const cat = categoriesData.find(c => c.categoryID === p.categoryID);
+          return {
+            id: `PRD-${p.productID}`,
+            productID: p.productID,
+            name: p.productName,
+            category: cat ? cat.categoryName : 'Khác',
+            price: new Intl.NumberFormat('vi-VN').format(p.salePrice),
+            stock: 100, 
+            status: p.status === 'ACTIVE' ? 'Còn hàng' : 'Ngừng kinh doanh'
+          };
+        });
+        setProducts(mapped);
+      } catch (err) {
+        console.error("Lỗi khi tải sản phẩm:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  // Danh sách các danh mục để chọn trong Modal Sửa
-  const categoriesList = [
-    'HÀNG XA XỈ',
-    'CÔNG NGHỆ DOANH NGHIỆP',
-    'PHẦN CỨNG',
-    'TIỆN NGHI',
-    'THIẾT BỊ VĂN PHÒNG'
-  ];
+  const categoriesList = categories.map(c => c.categoryName);
 
   // --- 2. TRẠNG THÁI MODAL & TOAST ---
   // Modal Xóa
@@ -68,7 +72,7 @@ const ProductManagement = () => {
 
   const confirmDeleteProduct = () => {
     setShowDeleteModal(false);
-    const updatedProducts = products.filter(p => p.id !== targetProduct.id);
+    const updatedProducts = products.filter(p => p.productID !== targetProduct.productID);
     setProducts(updatedProducts);
     showToastMsg(`Đã xóa sản phẩm "${targetProduct.name}" thành công!`);
     setTargetProduct(null);
@@ -82,13 +86,20 @@ const ProductManagement = () => {
 
   const saveEditProduct = () => {
     const updatedProducts = products.map(p => 
-      p.id === editFormData.id ? editFormData : p
+      p.productID === editFormData.productID ? editFormData : p
     );
     
     setProducts(updatedProducts); 
     setShowEditModal(false);      
-    showToastMsg(`Đã cập nhật sản phẩm "${editFormData.name}" thành công!`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00288E]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
@@ -103,7 +114,7 @@ const ProductManagement = () => {
         </div>
         
         <button 
-          onClick={() => navigate('/home/products/add')}
+          onClick={() => navigate('/sales/products/add')}
           className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
         >
           <span className="material-symbols-outlined text-xl">add</span> 
@@ -117,7 +128,7 @@ const ProductManagement = () => {
           
           {/* 4 Cards Thống kê */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0 px-2 md:px-0">
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex flex-col justify-between min-h-[120px] hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
               <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Tổng số SKU</p>
               <div className="flex items-end gap-3 mt-3">
                 <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-slate-900 tracking-tight">{products.length}</span>
@@ -127,7 +138,7 @@ const ProductManagement = () => {
               </div>
             </div>
             
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex flex-col justify-between min-h-[120px] hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
               <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Cảnh báo tồn kho thấp</p>
               <div className="flex items-end gap-3 mt-3">
                 <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-rose-600 tracking-tight">14</span>
@@ -135,7 +146,7 @@ const ProductManagement = () => {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-300 flex flex-col justify-between min-h-[120px] hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer">
               <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Giá trị kho hàng</p>
               <div className="flex items-end gap-2 mt-3">
                 <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-slate-900 tracking-tight">2.4B</span>
@@ -143,7 +154,7 @@ const ProductManagement = () => {
               </div>
             </div>
 
-            <div className="bg-[#00288E] p-5 rounded-xl shadow-md flex flex-col justify-center min-h-[120px] text-white relative overflow-hidden group">
+            <div className="bg-[#00288E] p-5 rounded-2xl shadow-md flex flex-col justify-center min-h-[120px] text-white relative overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
               <div className="absolute -right-2 -bottom-2 text-6xl opacity-10 group-hover:scale-110 transition-transform duration-500">📦</div>
               <p className="text-blue-200 text-[8px] sm:text-[9px] font-bold tracking-widest uppercase mb-2">14 Phút trước</p>
               <h3 className="text-sm sm:text-base md:text-lg xl:text-xl font-black tracking-tight">Đồng bộ gần nhất</h3>
@@ -151,7 +162,7 @@ const ProductManagement = () => {
           </div>
 
           {/* Box Bảng dữ liệu chính */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden mx-2 md:mx-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-300 hover:shadow-xl hover:border-blue-500 transition-all duration-300 flex flex-col overflow-hidden mx-2 md:mx-0">
             <div className="p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border-b border-gray-100 shrink-0">
               <div className="flex gap-3">
                 <button className="flex items-center gap-2 bg-slate-50 border border-gray-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">

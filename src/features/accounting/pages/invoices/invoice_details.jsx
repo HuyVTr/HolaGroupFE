@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import accountingService from '../services/accountingService';
-import dbData from '../mockdata/db.json';
-import '../styles/accounting.css';
+import accountingService from '../../services/accountingService';
+import dbData from '../../mockdata/db.json';
+import '../../styles/accounting.css';
 
 const InvoiceDetail = () => {
   const navigate = useNavigate();

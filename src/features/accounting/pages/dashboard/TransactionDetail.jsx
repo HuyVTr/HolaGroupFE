@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import accountingService from '../services/accountingService';
-import PrintableInvoiceTemplate from '../components/Print/PrintableInvoiceTemplate';
+import accountingService from '../../services/accountingService';
+import PrintableInvoiceTemplate from '../../components/Print/PrintableInvoiceTemplate';
 
 // Từ điển nhãn tiếng Việt dùng chung
 const TRANSACTION_LABEL_MAP = {

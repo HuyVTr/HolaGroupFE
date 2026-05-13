@@ -7,32 +7,32 @@ import AdminLayout from './features/admin/components/Layout/AdminLayout';
 import SalesLayout from './features/sales/components/Layout/SalesLayout';
 
 // === MODULE ADMIN ===
-import AdminDashboard from './features/admin/pages/AdminDashboard.jsx';
-import StaffManagement from './features/admin/staffs/StaffManagement.jsx';
-import StaffCreate from './features/admin/staffs/StaffCreate.jsx';
-import ProductManagement from './features/admin/products/ProductManagement.jsx';
-import AddProduct from './features/admin/products/AddProduct.jsx';
-import CategoryManagement from './features/admin/category/CategoryManagement.jsx';
-import AddCategory from './features/admin/category/AddCategory.jsx';
+import AdminDashboard from './features/admin/pages/dashboard/AdminDashboard.jsx';
+import StaffManagement from './features/admin/pages/staffs/StaffManagement.jsx';
+import StaffCreate from './features/admin/pages/staffs/StaffCreate.jsx';
+import CategoryManagement from './features/admin/pages/category/CategoryManagement.jsx';
+import AddCategory from './features/admin/pages/category/AddCategory.jsx';
 
 // === MODULE SALES ===
-import SalesDashboard from './features/sales/pages/SalesDashboard.jsx';
-import CustomerList from './features/sales/CustomerList';
-import CustomerCreate from './features/sales/CustomerCreate';
-import OrderManager from './features/admin/pages/OrderManagement'; // Dùng chung từ admin
-import PriceManagement from './features/admin/prices/PriceManagement.jsx'; // Dùng chung từ admin
-import PriceCreate from './features/admin/prices/AddPrice.jsx'; // Dùng chung từ admin
+import SalesDashboard from './features/sales/pages/dashboard/SalesDashboard.jsx';
+import CustomerList from './features/sales/pages/customers/CustomerList.jsx';
+import CustomerCreate from './features/sales/pages/customers/CustomerCreate.jsx';
+import ProductManagement from './features/sales/pages/products/ProductManagement.jsx';
+import AddProduct from './features/sales/pages/products/AddProduct.jsx';
+import OrderManager from './features/sales/pages/orders/OrderManagement.jsx';
+import PriceManagement from './features/sales/pages/prices/PriceManagement.jsx';
+import PriceCreate from './features/sales/pages/prices/AddPrice.jsx';
 
 // === MODULE KẾ TOÁN (Accounting) ===
-import AccountingDashboard from './features/accounting/dashboard/index.jsx';
-import InvoiceList from './features/accounting/invoices/index.jsx';
-import InvoiceDetail from './features/accounting/invoices/invoice_details.jsx';
-import DebtTracker from './features/accounting/debts/index.jsx';
-import PaymentList from './features/accounting/payments/index.jsx';
-import PaymentDetail from './features/accounting/payments/detail.jsx';
-import AccountingReport from './features/accounting/reports/accounting/index.jsx';
+import AccountingDashboard from './features/accounting/pages/dashboard/index.jsx';
+import InvoiceList from './features/accounting/pages/invoices/index.jsx';
+import InvoiceDetail from './features/accounting/pages/invoices/invoice_details.jsx';
+import DebtTracker from './features/accounting/pages/debts/index.jsx';
+import PaymentList from './features/accounting/pages/payments/index.jsx';
+import PaymentDetail from './features/accounting/pages/payments/detail.jsx';
+import AccountingReport from './features/accounting/pages/reports/accounting/index.jsx';
 import AccountingLayout from './features/accounting/components/Layout/AccountingLayout';
-import TransactionDetail from './features/accounting/dashboard/TransactionDetail.jsx';
+import TransactionDetail from './features/accounting/pages/dashboard/TransactionDetail.jsx';
 
 // === MODULE KHO HÀNG (Warehouse) ===
 import WarehouseLayout from './features/warehouse/components/Layout/WarehouseLayout';

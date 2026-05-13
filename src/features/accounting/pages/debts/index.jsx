@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useToast } from '../components/Common/AccountingToast';
-import accountingService from '../services/accountingService';
-import DebtTable from '../components/Tables/DebtTable';
-import '../styles/accounting.css';
+import { useToast } from '../../components/Common/AccountingToast';
+import accountingService from '../../services/accountingService';
+import DebtTable from '../../components/Tables/DebtTable';
+import '../../styles/accounting.css';
 
 const DebtTracker = () => {
   const { showToast } = useToast();

@@ -151,7 +151,7 @@ const PriceManagement = () => {
         </div>
         
         <button 
-          onClick={() => navigate('/home/prices/add')}
+          onClick={() => navigate('/sales/prices/add')}
           className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <span className="material-symbols-outlined text-xl">add_circle</span> Tạo báo giá mới
@@ -162,7 +162,7 @@ const PriceManagement = () => {
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
         <div className="flex flex-col gap-4 mx-2 md:mx-0">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center h-32 relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer flex flex-col justify-center h-32 relative overflow-hidden">
           <p className="text-slate-400 text-[10px] font-bold tracking-wider uppercase mb-1">TỔNG BÁO GIÁ</p>
           <div className="flex items-end gap-4">
             <span className="text-4xl font-bold text-[#00288E] font-manrope">{quotations.length}</span>
@@ -172,7 +172,7 @@ const PriceManagement = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center h-32 relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer flex flex-col justify-center h-32 relative overflow-hidden">
           <p className="text-slate-400 text-[10px] font-bold tracking-wider uppercase mb-1">ĐANG CHỜ DUYỆT</p>
           <div className="flex items-end gap-4">
             <span className="text-4xl font-bold text-slate-800 font-manrope">42</span>
@@ -180,7 +180,7 @@ const PriceManagement = () => {
           </div>
         </div>
 
-        <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center h-32 relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-300 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-500 transition-all duration-300 cursor-pointer flex flex-col justify-center h-32 relative overflow-hidden">
           <p className="text-slate-400 text-[10px] font-bold tracking-wider uppercase mb-1">TỶ LỆ CHUYỂN ĐỔI</p>
           <div className="flex items-end gap-4">
             <span className="text-4xl font-bold text-[#00288E] font-manrope">68.4%</span>
@@ -192,7 +192,7 @@ const PriceManagement = () => {
       </div>
 
       {/* --- CÔNG CỤ TÌM KIẾM VÀ LỌC --- */}
-      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl border border-slate-100 items-center justify-between shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-2xl border border-slate-300 items-center justify-between shadow-sm hover:shadow-md transition-all">
         <div className="relative w-full md:w-2/3">
           <input 
             type="text" 
@@ -217,7 +217,7 @@ const PriceManagement = () => {
       </div>
 
       {/* --- BẢNG DỮ LIỆU CHÍNH --- */}
-      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-300 overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-500 transition-all duration-300 flex flex-col">
         
         <div className="p-5 flex justify-between items-center border-b border-slate-50 bg-white">
           <div className="flex gap-2">
