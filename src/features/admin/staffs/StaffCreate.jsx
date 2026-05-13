@@ -8,24 +8,34 @@ const StaffCreate = () => {
   const [requirePassChange, setRequirePassChange] = useState(true);
 
   return (
-    <div className="w-full bg-[#f8fafc] min-h-screen p-6 font-sans text-[#191c1e]">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
       {/* Header */}
-      <div className="flex justify-between items-start mb-8 pt-4">
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <h1 className="text-3xl font-bold text-[#0f172a] mb-2">Thêm nhân viên mới</h1>
-          <p className="text-[#64748b] text-sm max-w-lg">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm nhân viên mới</h1>
+          <p className="text-[#64748b] text-sm max-w-lg mt-1">
             Điền đầy đủ thông tin để cấp quyền truy cập hệ thống Nexus cho nhân sự mới trong tổ chức.
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-green-50/50 border border-green-100 px-4 py-2 rounded-full">
-          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Hệ thống Hola Group trực tuyến</span>
+        
+        <div className="flex gap-3">
+          <button 
+            onClick={() => navigate('/home/staffs')}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Hủy bỏ
+          </button>
+          <button className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-xl">save</span> Lưu nhân viên
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CỘT TRÁI */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          
+          {/* Cột trái: Form thông tin */}
         <div className="flex flex-col gap-6">
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-50 flex flex-col items-center justify-center text-center h-full min-h-[280px]">
             <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-4 border border-dashed border-gray-300 cursor-pointer hover:bg-gray-200 transition">
@@ -129,19 +139,7 @@ const StaffCreate = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Footer Buttons */}
-      <div className="flex justify-end gap-4 mt-8">
-        <button 
-          onClick={() => navigate('/home/staff')}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-3 rounded-xl text-sm font-bold transition-colors"
-        >
-          Hủy bỏ
-        </button>
-        <button className="bg-[#1e3a8a] hover:bg-blue-900 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-md transition-colors flex items-center gap-2">
-          <span>👤+</span> Thêm nhân viên
-        </button>
+        </div>
       </div>
     </div>
   );

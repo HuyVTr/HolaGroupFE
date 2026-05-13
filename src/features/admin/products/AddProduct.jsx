@@ -5,24 +5,32 @@ const AddProduct = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col relative min-h-full">
-      {/* Breadcrumb & Tiêu đề */}
-      <div className="mb-6">
-        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex gap-2">
-          <Link to="/home/products" className="hover:text-[#00288E] transition-colors">Kho hàng</Link>
-          <span>›</span>
-          <Link to="/home/products" className="hover:text-[#00288E] transition-colors">Sản phẩm</Link>
-          <span>›</span>
-          <span className="text-[#00288E]">Thêm mới</span>
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
+      
+      {/* Header */}
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
+        <div>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm sản phẩm mới</h1>
         </div>
-        <h1 className="text-3xl font-bold text-[#1e3a8a] font-manrope">Thêm sản phẩm mới</h1>
+        
+        <div className="flex gap-3">
+          <button 
+            onClick={() => navigate('/admin/products')}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Hủy bỏ
+          </button>
+          <button className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-xl">save</span> Lưu sản phẩm
+          </button>
+        </div>
       </div>
 
-      {/* Nội dung form chia 2 cột */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-24">
-        
-        {/* CỘT TRÁI (Rộng hơn - Chiếm 2 phần) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          
+          {/* CỘT TRÁI (Rộng hơn - Chiếm 2 phần) */}
+          <div className="xl:flex-[2] flex flex-col gap-6">
           
           {/* Box 1: Thông tin cơ bản */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -63,7 +71,7 @@ const AddProduct = () => {
         </div>
 
         {/* CỘT PHẢI (Hẹp hơn - Chiếm 1 phần) */}
-        <div className="flex flex-col gap-6">
+        <div className="xl:flex-[1] flex flex-col gap-6">
           
           {/* Box 3: Hình ảnh */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -117,21 +125,8 @@ const AddProduct = () => {
 
         </div>
       </div>
-
-      {/* Thanh công cụ nổi ở đáy (Sticky Bottom Bar) */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-end items-center gap-4 rounded-b-2xl z-10">
-        <button 
-          onClick={() => navigate('/home/products')}
-          className="text-sm font-bold text-slate-500 hover:text-slate-800 px-4 py-2 transition-colors"
-        >
-          Hủy bỏ
-        </button>
-        <button className="bg-[#00288E] hover:bg-[#1e40af] text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-all flex items-center gap-2">
-          <span>💾</span> Lưu sản phẩm
-        </button>
-      </div>
-
     </div>
+  </div>
   );
 };
 

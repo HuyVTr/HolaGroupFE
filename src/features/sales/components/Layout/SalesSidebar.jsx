@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
-const WarehouseSidebar = ({ isOpen, onClose }) => {
+const SalesSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,17 +12,15 @@ const WarehouseSidebar = ({ isOpen, onClose }) => {
   };
 
   const menuItems = [
-    { name: 'Tổng quan Kho', path: '/warehouse', icon: 'dashboard', exact: true },
-    { name: 'Lệnh giao hàng', path: '/warehouse/delivery', icon: 'local_shipping' },
-    { name: 'Nhập kho', path: '/warehouse/stock-import', icon: 'inventory_2' },
-    { name: 'Báo cáo tồn kho', path: '/warehouse/inventory', icon: 'assessment' },
+    { name: 'Bảng điều khiển', path: '/sales', icon: 'dashboard', end: true },
+    { name: 'Đơn hàng', path: '/sales/orders', icon: 'shopping_cart' },
+    { name: 'Bảng giá', path: '/sales/prices', icon: 'sell' },
   ];
 
   const user = JSON.parse(localStorage.getItem('user')) || {
-    firstName: 'User',
-    lastName: 'Demo',
-    email: 'user@example.com',
-    roleName: 'Quản lý kho'
+    firstName: 'Sale',
+    lastName: 'Nhân viên',
+    roleName: 'Nhân viên Sales'
   };
 
   const fullName = `${user.lastName} ${user.firstName}`;
@@ -48,24 +46,24 @@ const WarehouseSidebar = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
-                <span className="material-symbols-outlined text-white text-2xl">inventory_2</span>
+                <span className="material-symbols-outlined text-white text-2xl">trending_up</span>
               </div>
               <div>
                 <h2 className="text-white font-black text-xl tracking-tighter leading-none mb-1">HOLAGROUP</h2>
-                <p className="text-blue-200/60" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>Phân hệ Kho</p>
+                <p className="text-blue-200/60" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>Phân hệ Kinh doanh</p>
               </div>
             </div>
           </div>
         </div>
 
         <nav className="flex-1 space-y-2 overflow-y-auto scrollbar-none" style={{ padding: '0 1.5rem' }}>
-          <p className="text-blue-300/40" style={{ padding: '0 1rem', marginBottom: '1rem', fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>Danh mục quản lý</p>
+          <p className="text-blue-300/40" style={{ padding: '0 1rem', marginBottom: '1rem', fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>Kinh doanh</p>
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onClose}
-              end={item.exact}
+              end={item.end}
               className={({ isActive }) => `
                 group flex items-center gap-4 rounded-2xl transition-all duration-300 relative overflow-hidden
                 ${isActive 
@@ -88,7 +86,7 @@ const WarehouseSidebar = ({ isOpen, onClose }) => {
               style={{ padding: '1rem 1.5rem' }}
             >
               <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:-translate-x-1">arrow_back_ios</span>
-              <span className="font-bold" style={{ fontSize: '1.0625rem', lineHeight: '1.6rem' }}>Quay lại hệ thống</span>
+              <span className="font-bold" style={{ fontSize: '1.0625rem', lineHeight: '1.6rem' }}>Hệ thống chung</span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
             </NavLink>
           </div>
@@ -98,12 +96,12 @@ const WarehouseSidebar = ({ isOpen, onClose }) => {
         <div className="shrink-0" style={{ padding: '1.5rem' }}>
           <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 relative overflow-hidden group" style={{ padding: '1.5rem' }}>
             <div className="flex items-center gap-4" style={{ marginBottom: '1.5rem' }}>
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-lg border border-white/20">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-xl flex items-center justify-center font-black text-xs text-white shadow-lg border border-white/20">
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black tracking-tight truncate" style={{ fontSize: '0.9375rem', lineHeight: '1.4rem' }}>{fullName}</p>
-                <p className="text-blue-200/50 truncate" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{user.roleName || 'Quản lý kho'}</p>
+                <p className="text-blue-200/50 truncate" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{user.roleName || 'Nhân viên Sales'}</p>
               </div>
             </div>
             
@@ -121,4 +119,4 @@ const WarehouseSidebar = ({ isOpen, onClose }) => {
   );
 };
 
-export default WarehouseSidebar;
+export default SalesSidebar;

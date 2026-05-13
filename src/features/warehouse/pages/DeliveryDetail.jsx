@@ -90,7 +90,7 @@ const DeliveryDetail = () => {
   const currentStatusIndex = STATUS_FLOW.indexOf(order.deliveryStatus === 'failed' ? 'shipping' : order.deliveryStatus);
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="font-inter flex-1 flex flex-col gap-5 min-h-0">
       {/* Toast */}
       {showSuccessToast && (
         <div className="fixed top-4 right-4 z-[300] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 wh-animate-scale-in">
@@ -107,14 +107,14 @@ const DeliveryDetail = () => {
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 uppercase tracking-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">
                 Đơn hàng {order.id}
               </h1>
               <span className={`wh-badge ${order.deliveryStatus}`}>
                 <span className="wh-badge-dot" />{STATUS_LABELS[order.deliveryStatus]}
               </span>
             </div>
-            <p className="text-sm text-gray-500 font-medium mt-0.5">
+            <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
               Ngày đặt: {formatDate(order.orderDate)}
             </p>
           </div>
@@ -212,14 +212,14 @@ const DeliveryDetail = () => {
           {/* Order Items */}
           <div className="wh-card p-5">
             <h3 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">Chi tiết sản phẩm</h3>
-            <div className="overflow-x-auto rounded-xl border border-gray-100">
+            <div className="max-h-[300px] overflow-auto scrollbar-thin scrollbar-thumb-slate-200 rounded-xl border border-gray-100">
               <table className="wh-table">
                 <thead>
                   <tr>
-                    <th>Sản phẩm</th>
-                    <th className="text-right">Số lượng</th>
-                    <th className="text-right">Đơn giá</th>
-                    <th className="text-right">Thành tiền</th>
+                    <th className="sticky top-0 bg-[#F8FAFC] z-10">Sản phẩm</th>
+                    <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Số lượng</th>
+                    <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Đơn giá</th>
+                    <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Thành tiền</th>
                   </tr>
                 </thead>
                 <tbody>

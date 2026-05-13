@@ -1,13 +1,15 @@
 {
   "roles": [
-    { "roleID": 1, "roleName": "Kế toán trưởng" },
-    { "roleID": 2, "roleName": "Nhân viên Sales" },
-    { "roleID": 3, "roleName": "Quản trị viên" }
+    { "roleID": 1, "roleName": "Kế toán" },
+    { "roleID": 2, "roleName": "Nhân viên bán hàng" },
+    { "roleID": 3, "roleName": "Quản trị viên" },
+    { "roleID": 4, "roleName": "Nhân viên kho" }
   ],
   "users": [
-    { "userID": 1, "lastName": "Nguyễn Văn", "firstName": "An", "dateOfBirth": "1990-01-01", "phoneNumber": "0901112222", "email": "an.nv@hola.com", "address": "TP.HCM", "roleID": 2 },
-    { "userID": 2, "lastName": "Trần Thị", "firstName": "Bình", "dateOfBirth": "1992-05-05", "phoneNumber": "0903334444", "email": "binh.tt@hola.com", "address": "Hà Nội", "roleID": 2 },
-    { "userID": 3, "lastName": "Võ", "firstName": "Huy", "dateOfBirth": "1988-12-25", "phoneNumber": "0933445566", "email": "votruonghuy25@gmail.com", "address": "Quận 1, TP.HCM", "roleID": 1 }
+    { "userID": 1, "lastName": "Nguyễn Văn", "firstName": "An", "dateOfBirth": "1990-01-01", "phoneNumber": "0901112222", "email": "sale@gmail.com", "address": "TP.HCM", "roleID": 2 },
+    { "userID": 3, "lastName": "Võ", "firstName": "Huy", "dateOfBirth": "1988-12-25", "phoneNumber": "0933445566", "email": "accounting@gmail.com", "address": "Quận 1, TP.HCM", "roleID": 1 },
+    { "userID": 4, "lastName": "Lê Văn", "firstName": "Kho", "dateOfBirth": "1995-03-15", "phoneNumber": "0905556666", "email": "warehouse@gmail.com", "address": "Bình Dương", "roleID": 4 },
+    { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "dateOfBirth": "1985-07-20", "phoneNumber": "0907778888", "email": "admin@gmail.com", "address": "TP.HCM", "roleID": 3 }
   ],
   "customers": [
     { "customerID": 1, "firstName": "Kiến Trúc Việt", "lastName": "Công ty CP", "address": "123 Đường Lê Lợi, Quận 1, TP.HCM", "phoneNumber": "0901234567", "email": "ktviet@email.com", "companyName": "Công ty CP Kiến Trúc Việt", "status": "ACTIVE" },

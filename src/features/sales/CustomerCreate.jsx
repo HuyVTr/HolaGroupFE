@@ -16,47 +16,38 @@ const CustomerCreate = () => {
     alert("Đã thêm khách hàng mới thành công!");
     
     // Sau khi lưu xong thì tự động quay về trang danh sách
-    navigate('/home/customers');
+    navigate('/admin/customers');
   };
 
   return (
-    <div className="w-full font-sans text-[#191c1e] bg-[#f8fafc] min-h-screen pb-10">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
-      {/* 1. Header & Breadcrumb */}
-      <div className="flex justify-between items-end mb-8 pt-4">
+      {/* 1. Header */}
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <div className="text-[10px] font-bold text-gray-400 tracking-wider mb-2 uppercase flex gap-2">
-            <span>DANH MỤC</span> 
-            <span>›</span> 
-            {/* Sử dụng Link để có thể click quay lại */}
-            <Link to="/home/customers" className="hover:text-[#00288E] transition-colors">KHÁCH HÀNG</Link>
-            <span>›</span> 
-            <span className="text-[#00288E]">THÊM MỚI</span>
-          </div>
-          <h1 className="text-3xl font-manrope font-bold text-[#00288E]">Thêm mới khách hàng</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm mới khách hàng</h1>
         </div>
         <div className="flex gap-3">
-          {/* 3. Gắn sự kiện navigate vào nút Hủy bỏ */}
           <button 
-            onClick={() => navigate('/home/customers')}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
+            onClick={() => navigate('/admin/customers')}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
           >
             Hủy bỏ
           </button>
-          {/* Gắn sự kiện handleSave vào nút Lưu thông tin */}
           <button 
             onClick={handleSave}
-            className="bg-[#00288E] hover:bg-[#1e40af] text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors"
+            className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2"
           >
-            Lưu thông tin
+            <span className="material-symbols-outlined text-xl">save</span> Lưu thông tin
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* CỘT TRÁI (Nội dung chính) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          
+          {/* CỘT TRÁI (Nội dung chính) */}
+          <div className="xl:flex-[2] flex flex-col gap-6">
           
           {/* Box Thông tin định danh */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
@@ -102,7 +93,7 @@ const CustomerCreate = () => {
         </div>
 
         {/* CỘT PHẢI (Phân loại & Ghi chú) */}
-        <div className="col-span-1 flex flex-col gap-6">
+        <div className="xl:flex-[1] flex flex-col gap-6">
           
           {/* Box Phân loại đối tượng */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
@@ -201,11 +192,8 @@ const CustomerCreate = () => {
 
         </div>
       </div>
-
-      {/* Footer Badges */}
-    
-
     </div>
+  </div>
   );
 };
 

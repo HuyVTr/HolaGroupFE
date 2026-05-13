@@ -56,14 +56,14 @@ const DeliveryOrders = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="font-inter flex-1 flex flex-col gap-5 min-h-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-1">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 uppercase tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">
             Lệnh giao hàng
           </h1>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
             Quản lý và theo dõi tiến trình giao hàng cho đơn hàng đã xác nhận
           </p>
         </div>
@@ -96,7 +96,7 @@ const DeliveryOrders = () => {
       </div>
 
       {/* Table */}
-      <div className="wh-card overflow-hidden">
+      <div className="wh-card flex-1 flex flex-col overflow-hidden min-h-0">
         {loading ? (
           <div className="p-8 space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -110,17 +110,17 @@ const DeliveryOrders = () => {
             <p className="text-xs text-gray-300 mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200">
             <table className="wh-table">
               <thead>
                 <tr>
-                  <th>Mã đơn</th>
-                  <th>Khách hàng</th>
-                  <th>Địa chỉ giao</th>
-                  <th>Ngày đặt</th>
-                  <th>Tổng tiền</th>
-                  <th>Trạng thái</th>
-                  <th>Thao tác</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Mã đơn</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Khách hàng</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Địa chỉ giao</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Ngày đặt</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tổng tiền</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Trạng thái</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Thao tác</th>
                 </tr>
               </thead>
               <tbody>

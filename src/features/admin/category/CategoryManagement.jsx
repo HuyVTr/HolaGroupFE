@@ -66,24 +66,27 @@ const CategoryManagement = () => {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-10 relative min-h-screen">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
       {/* --- HEADER --- */}
-      <div className="flex justify-between items-end mt-4">
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <p className="text-[11px] font-bold text-[#00288E] uppercase tracking-widest mb-2">Quản lý kho doanh nghiệp</p>
-          <h1 className="text-3xl font-bold text-slate-800 font-manrope">Quản lý danh mục</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý danh mục</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-lg leading-relaxed">
+            Quản lý kho doanh nghiệp. Điều chỉnh và phân loại các nhóm sản phẩm trong hệ thống.
+          </p>
         </div>
         <button 
           onClick={() => navigate('/home/categories/add')}
-          className="bg-[#00288E] hover:bg-[#1e40af] text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-md flex items-center gap-2"
+          className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap"
         >
-          <span className="text-lg leading-none">⊕</span> Thêm danh mục
+          <span className="material-symbols-outlined text-xl">add_circle</span> Thêm danh mục
         </button>
       </div>
 
-      {/* --- DANH SÁCH DANH MỤC --- */}
-      <div className="flex flex-col gap-4">
+      {/* Content - Cuộn nội bộ */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col gap-4 mx-2 md:mx-0">
         {categories.map((cat) => (
           <div key={cat.id} className="bg-white rounded-2xl p-5 flex items-center justify-between border border-slate-100 shadow-sm hover:shadow-md transition-all">
             <div className="flex items-center gap-5">
@@ -203,7 +206,8 @@ const CategoryManagement = () => {
         </div>
       )}
 
-    </div>
+        </div>
+      </div>
   );
 };
 
