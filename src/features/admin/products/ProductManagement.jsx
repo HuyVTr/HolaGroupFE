@@ -91,205 +91,205 @@ const ProductManagement = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 relative min-h-screen">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
-      {/* Top Tabs */}
-      <div className="flex gap-6 border-b border-slate-200">
-        {topTabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-sm font-medium transition-all border-b-2 ${
-              activeTab === tab
-                ? 'border-[#00288E] text-[#00288E]'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
       {/* Header */}
-      <div className="flex justify-between items-start mt-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0 px-2 md:px-0">
         <div>
-          <h1 className="text-3xl font-bold text-[#1e3a8a] font-manrope">Danh mục Sản phẩm</h1>
-          <p className="text-sm text-slate-500 mt-2 max-w-md">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Danh mục Sản phẩm</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-md">
             Quản lý tài sản doanh nghiệp, mức tồn kho và khả năng hiển thị danh mục từ một sổ cái thống nhất.
           </p>
         </div>
         
         <button 
           onClick={() => navigate('/home/products/add')}
-          className="bg-[#00288E] hover:bg-[#1e40af] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-md flex items-center gap-2"
+          className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
         >
-          <span className="text-lg leading-none">+</span> Thêm Sản phẩm
+          <span className="material-symbols-outlined text-xl">add</span> 
+          Thêm Sản phẩm
         </button>
       </div>
 
-      {/* 4 Cards Thống kê */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-32">
-          <p className="text-slate-400 text-xs font-semibold tracking-wider uppercase">Tổng số SKU</p>
-          <div className="flex items-end gap-3">
-            <span className="text-4xl font-bold text-[#1e3a8a] font-manrope">{products.length}</span>
-            <span className="text-emerald-600 text-xs font-bold mb-1.5">+12%</span>
-          </div>
-        </div>
-        
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-32">
-          <p className="text-slate-400 text-xs font-semibold tracking-wider uppercase">Cảnh báo tồn kho thấp</p>
-          <div className="flex items-end gap-3">
-            <span className="text-4xl font-bold text-[#802a00] font-manrope">14</span>
-            <span className="text-[#802a00] text-xs font-bold mb-1.5">Cần xử lý</span>
-          </div>
-        </div>
+      {/* Content - Cuộn nội bộ */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col gap-6">
+          
+          {/* 4 Cards Thống kê */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0 px-2 md:px-0">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+              <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Tổng số SKU</p>
+              <div className="flex items-end gap-3 mt-3">
+                <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-slate-900 tracking-tight">{products.length}</span>
+                <span className="text-emerald-600 text-xs font-bold mb-1.5 flex items-center">
+                  <span className="material-symbols-outlined text-[14px]">trending_up</span> +12%
+                </span>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+              <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Cảnh báo tồn kho thấp</p>
+              <div className="flex items-end gap-3 mt-3">
+                <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-rose-600 tracking-tight">14</span>
+                <span className="text-rose-600 text-xs font-bold mb-1.5">Cần xử lý</span>
+              </div>
+            </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between h-32">
-          <p className="text-slate-400 text-xs font-semibold tracking-wider uppercase">Giá trị kho hàng</p>
-          <div className="flex items-end gap-2">
-            <span className="text-4xl font-bold text-[#1e3a8a] font-manrope">2.4B</span>
-            <span className="text-slate-400 text-xs font-medium mb-1.5">Giá trị Kho hàng</span>
-          </div>
-        </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between min-h-[120px] hover:shadow-md transition-shadow">
+              <p className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Giá trị kho hàng</p>
+              <div className="flex items-end gap-2 mt-3">
+                <span className="text-sm sm:text-base md:text-lg xl:text-xl font-black text-slate-900 tracking-tight">2.4B</span>
+                <span className="text-slate-500 text-xs font-medium mb-1.5">VNĐ</span>
+              </div>
+            </div>
 
-        <div className="bg-[#00288E] p-5 rounded-2xl shadow-md flex flex-col justify-center h-32 text-white relative overflow-hidden">
-          <div className="absolute right-[-10px] bottom-[-20px] opacity-10 text-8xl">📦</div>
-          <p className="text-blue-200 text-xs font-semibold tracking-wider uppercase mb-1">14 Phút trước</p>
-          <h3 className="text-lg font-bold font-manrope">Đồng bộ gần nhất</h3>
-        </div>
-      </div>
-
-      {/* Box Bảng dữ liệu chính */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden mt-2">
-        <div className="p-5 flex justify-between items-center bg-white border-b border-slate-100">
-          <div className="flex gap-3">
-            <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-              <span>≡</span> Lọc
-            </button>
-            <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-              <span>⇅</span> Sắp xếp
-            </button>
+            <div className="bg-[#00288E] p-5 rounded-xl shadow-md flex flex-col justify-center min-h-[120px] text-white relative overflow-hidden group">
+              <div className="absolute -right-2 -bottom-2 text-6xl opacity-10 group-hover:scale-110 transition-transform duration-500">📦</div>
+              <p className="text-blue-200 text-[8px] sm:text-[9px] font-bold tracking-widest uppercase mb-2">14 Phút trước</p>
+              <h3 className="text-sm sm:text-base md:text-lg xl:text-xl font-black tracking-tight">Đồng bộ gần nhất</h3>
+            </div>
           </div>
-          <div className="text-sm text-slate-400">
-            Hiển thị 1-{products.length} trên tổng số {products.length} sản phẩm
-          </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-white border-b border-slate-100 text-slate-400 text-xs font-bold uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4 w-1/3">CHI TIẾT SẢN PHẨM</th>
-                <th className="px-6 py-4">DANH MỤC</th>
-                <th className="px-6 py-4">GIÁ (VNĐ)</th>
-                <th className="px-6 py-4">TRẠNG THÁI KHO</th>
-                <th className="px-6 py-4 text-center">THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {products.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-10 text-slate-500">
-                    Không có sản phẩm nào.
-                  </td>
-                </tr>
-              ) : (
-                products.map((product, index) => (
-                  <tr key={index} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center flex-shrink-0">
-                          <span className="text-slate-300 text-xs">IMG</span>
-                        </div>
-                        <div>
-                          <div className="font-bold text-[#1e3a8a] text-base">{product.name}</div>
-                          <div className="text-xs text-slate-400 mt-0.5">ID: {product.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-wide">
-                        {product.category}
-                      </span>
-                    </td>
-                    
-                    <td className="px-6 py-4 font-bold text-slate-800 text-base">
-                      {product.price}
-                    </td>
-                    
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${product.stock > 10 ? 'bg-emerald-500' : 'bg-orange-500'}`}></span>
-                        <span className={`font-semibold text-xs ${product.stock > 10 ? 'text-emerald-600' : 'text-orange-600'}`}>
-                          {product.stock} {product.status}
-                        </span>
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* BẤM NÚT SỬA */}
-                        <button 
-                          onClick={() => openEditModal(product)} 
-                          className="text-slate-400 hover:text-[#00288E] hover:bg-slate-100 transition-colors p-2 rounded-lg"
-                        >
-                          ✎
-                        </button>
-                        {/* BẤM NÚT XÓA */}
-                        <button 
-                          onClick={() => openDeleteModal(product)}
-                          className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </td>
+          {/* Box Bảng dữ liệu chính */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden mx-2 md:mx-0">
+            <div className="p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border-b border-gray-100 shrink-0">
+              <div className="flex gap-3">
+                <button className="flex items-center gap-2 bg-slate-50 border border-gray-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                  <span className="material-symbols-outlined text-[18px]">filter_list</span> Lọc
+                </button>
+                <button className="flex items-center gap-2 bg-slate-50 border border-gray-200 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+                  <span className="material-symbols-outlined text-[18px]">sort</span> Sắp xếp
+                </button>
+              </div>
+              <div className="text-sm text-slate-500 font-medium">
+                Hiển thị 1-{products.length} trên tổng số {products.length} sản phẩm
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap relative">
+                <thead className="sticky top-0 bg-slate-50 z-10 border-b border-gray-200">
+                  <tr className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <th className="px-6 py-4 font-semibold">Chi tiết sản phẩm</th>
+                    <th className="px-6 py-4 font-semibold">Danh mục</th>
+                    <th className="px-6 py-4 font-semibold">Giá (VNĐ)</th>
+                    <th className="px-6 py-4 font-semibold">Trạng thái kho</th>
+                    <th className="px-6 py-4 font-semibold text-center">Thao tác</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50 text-slate-700">
+                  {products.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-12 text-slate-500">
+                        <span className="material-symbols-outlined text-4xl block mb-2 opacity-50">inventory_2</span>
+                        Không có sản phẩm nào.
+                      </td>
+                    </tr>
+                  ) : (
+                    products.map((product, index) => (
+                      <tr key={index} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-slate-100 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0">
+                              <span className="material-symbols-outlined text-slate-400">image</span>
+                            </div>
+                            <div>
+                              <div className="font-bold text-slate-900 text-sm md:text-base">{product.name}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">ID: {product.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-wide border border-blue-100">
+                            {product.category}
+                          </span>
+                        </td>
+                        
+                        <td className="px-6 py-4 font-bold text-slate-900 text-sm md:text-base">
+                          {product.price}
+                        </td>
+                        
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${product.stock > 10 ? 'bg-emerald-500' : 'bg-orange-500'}`}></span>
+                            <span className={`font-semibold text-xs ${product.stock > 10 ? 'text-emerald-600' : 'text-orange-600'}`}>
+                              {product.stock} {product.status}
+                            </span>
+                          </div>
+                        </td>
+                        
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => openEditModal(product)} 
+                              className="text-slate-400 hover:text-[#00288E] hover:bg-blue-50 transition-colors p-2 rounded-lg"
+                              title="Chỉnh sửa"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">edit</span>
+                            </button>
+                            <button 
+                              onClick={() => openDeleteModal(product)}
+                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
+                              title="Xóa"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-        <div className="p-5 flex items-center justify-between text-sm text-slate-500 bg-white">
-          <button className="font-semibold hover:text-[#00288E] uppercase text-xs tracking-wider">Trước</button>
-          <div className="flex gap-2">
-            <button className="w-8 h-8 flex items-center justify-center bg-[#00288E] text-white rounded-md font-medium shadow-sm">1</button>
+            <div className="p-4 flex items-center justify-between text-sm text-slate-500 bg-white border-t border-gray-100 shrink-0">
+              <button className="font-semibold hover:text-[#00288E] uppercase text-xs tracking-wider flex items-center gap-1">
+                <span className="material-symbols-outlined text-[16px]">chevron_left</span> Trước
+              </button>
+              <div className="flex gap-1">
+                <button className="w-8 h-8 flex items-center justify-center bg-[#00288E] text-white rounded-lg font-medium shadow-sm">1</button>
+              </div>
+              <button className="font-semibold hover:text-[#00288E] uppercase text-xs tracking-wider flex items-center gap-1">
+                Sau <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+            </div>
           </div>
-          <button className="font-semibold hover:text-[#00288E] uppercase text-xs tracking-wider">Sau</button>
-        </div>
-      </div>
 
-      {/* Bottom Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
-        <div className="lg:col-span-2 bg-[#1e3a8a] rounded-2xl p-8 flex justify-between items-center text-white shadow-md relative overflow-hidden">
-          <div className="relative z-10 max-w-md">
-            <h2 className="text-2xl font-bold font-manrope mb-2">Tự động Bổ sung Kho hàng</h2>
-            <p className="text-blue-100 text-sm mb-6 opacity-90 leading-relaxed">
-              Hãy để thuật toán thông minh của Sổ Cái dự báo thời điểm hàng hóa nhu cầu cao sắp hết dựa trên xu hướng bán hàng.
-            </p>
-            <button className="bg-white text-[#1e3a8a] px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors">
-              Bật Tự động hóa
-            </button>
-          </div>
-          <div className="hidden md:block w-48 h-24 bg-white/10 rounded-xl border border-white/20 p-4 relative z-10">
-             <div className="w-3/4 h-2 bg-white/30 rounded-full mb-3"></div>
-             <div className="w-full h-2 bg-white/20 rounded-full mb-3"></div>
-             <div className="w-1/2 h-2 bg-white/20 rounded-full"></div>
-          </div>
-        </div>
+          {/* Bottom Widgets */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0 px-2 md:px-0">
+            <div className="lg:col-span-2 bg-[#00288E] rounded-xl p-6 md:p-8 flex flex-col sm:flex-row justify-between items-center text-white shadow-md relative overflow-hidden gap-6">
+              <div className="relative z-10 max-w-md text-center sm:text-left">
+                <h2 className="text-xl md:text-2xl font-bold mb-2">Tự động Bổ sung Kho hàng</h2>
+                <p className="text-blue-100 text-sm mb-6 opacity-90 leading-relaxed">
+                  Hãy để thuật toán thông minh của hệ thống dự báo thời điểm hàng hóa có nhu cầu cao sắp hết dựa trên xu hướng bán hàng.
+                </p>
+                <button className="bg-white text-[#00288E] px-6 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 transition-colors">
+                  Bật Tự động hóa
+                </button>
+              </div>
+              <div className="hidden sm:block w-48 h-24 bg-white/10 rounded-xl border border-white/20 p-4 relative z-10 shrink-0">
+                 <div className="w-3/4 h-2 bg-white/30 rounded-full mb-3"></div>
+                 <div className="w-full h-2 bg-white/20 rounded-full mb-3"></div>
+                 <div className="w-1/2 h-2 bg-white/20 rounded-full"></div>
+              </div>
+            </div>
 
-        <div className="bg-[#ffe5d9] rounded-2xl p-8 shadow-sm flex flex-col justify-center border border-[#ffd8c4]">
-          <div className="text-[#a33500] text-3xl mb-3">⚠️</div>
-          <h3 className="text-[#802a00] font-bold text-lg font-manrope mb-2">Cảnh báo Tồn kho Nguy cấp</h3>
-          <p className="text-[#a33500] text-sm mb-4">
-            3 mặt hàng dự kiến sẽ hết hàng trong vòng 48 giờ tới.
-          </p>
-          <a href="#" className="text-[#802a00] text-sm font-bold underline hover:text-[#5c1e00]">
-            Xem báo cáo
-          </a>
+            <div className="bg-rose-50 rounded-xl p-6 md:p-8 shadow-sm flex flex-col justify-center border border-rose-100">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="material-symbols-outlined text-rose-500 text-3xl">warning</span>
+                <h3 className="text-rose-700 font-bold text-lg">Tồn kho Nguy cấp</h3>
+              </div>
+              <p className="text-rose-600 text-sm mb-4 font-medium">
+                3 mặt hàng dự kiến sẽ hết hàng trong vòng 48 giờ tới.
+              </p>
+              <a href="#" className="text-rose-700 text-sm font-bold underline hover:text-rose-800 flex items-center gap-1 w-fit">
+                Xem báo cáo <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </a>
+            </div>
+          </div>
+          
         </div>
       </div>
 

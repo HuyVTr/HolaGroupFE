@@ -170,25 +170,35 @@ const AddPrice = () => {
   const [status, setStatus] = useState(true);
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-10 font-sans">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
       {/* --- HEADER --- */}
-      <div className="mt-4">
-        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex gap-2">
-          <Link to="/home" className="hover:text-[#00288E] transition-colors">HỆ THỐNG</Link>
-          <span>›</span>
-          <Link to="/home/price-management" className="hover:text-[#00288E] transition-colors">QUẢN LÝ GIÁ</Link>
-          <span>›</span>
-          <span className="text-[#00288E]">THÊM BẢNG GIÁ MỚI</span>
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
+        <div>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm bảng giá mới</h1>
         </div>
-        <h1 className="text-3xl font-bold text-slate-800 font-manrope">Thêm bảng giá mới</h1>
-        <p className="text-sm text-slate-500 mt-1">Thiết lập cấu trúc giá và đối tượng áp dụng cho hệ thống Hola Group.</p>
+
+        <div className="flex gap-3">
+          <button 
+            onClick={() => navigate('/sales/prices')}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Hủy bỏ
+          </button>
+          <button 
+            onClick={() => navigate('/sales/prices')}
+            className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-xl">save</span> Lưu bảng giá
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        
-        {/* Cột trái (Form nhập liệu) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          
+          {/* Cột trái (Form nhập liệu) */}
+          <div className="xl:flex-[2] flex flex-col gap-6">
           <div className="bg-white rounded-3xl p-8 shadow-[0_2px_20px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col gap-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-1 h-5 bg-[#00288E] rounded-full"></div>
@@ -346,27 +356,10 @@ const AddPrice = () => {
             </div>
           </div>
 
-          <div className="flex justify-between items-center bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
-            <span className="text-xs font-medium text-slate-400">Thay đổi của bạn sẽ được lưu dưới dạng bản nháp nếu chưa xuất bản.</span>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => navigate('/home/prices')}
-                className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs font-bold transition-colors"
-              >
-                Hủy bỏ
-              </button>
-              <button 
-                onClick={() => navigate('/home/prices')}
-                className="px-6 py-2.5 bg-[#00288E] hover:bg-[#1e40af] text-white rounded-xl text-xs font-bold shadow-md transition-colors flex items-center gap-2"
-              >
-                <span>💾</span> Lưu bảng giá
-              </button>
-            </div>
           </div>
-        </div>
 
         {/* Cột phải (Đối tượng áp dụng) */}
-        <div className="flex flex-col gap-6">
+        <div className="xl:flex-[1] flex flex-col gap-6">
           <div className="bg-white rounded-3xl p-6 shadow-[0_2px_20px_rgba(0,0,0,0.03)] border border-slate-100">
             <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-wide">
               <span className="text-[#00288E]">👥</span> Đối tượng áp dụng
@@ -429,6 +422,7 @@ const AddPrice = () => {
               </p>
             </div>
           </div>
+        </div>
         </div>
       </div>
 

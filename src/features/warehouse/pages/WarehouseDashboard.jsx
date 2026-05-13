@@ -66,14 +66,14 @@ const WarehouseDashboard = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="font-inter flex-1 flex flex-col gap-5 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-2">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-1">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 uppercase tracking-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">
             Tổng quan Kho hàng
           </h1>
-          <p className="text-sm text-gray-500 font-medium">
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
             Theo dõi tồn kho, giao hàng và cảnh báo hết hàng
           </p>
         </div>
@@ -163,16 +163,16 @@ const WarehouseDashboard = () => {
         </div>
 
         {(stats?.lowStockProducts?.length > 0 || stats?.outOfStockProducts?.length > 0) ? (
-          <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <div className="max-h-[300px] overflow-auto rounded-xl border border-gray-100 scrollbar-thin scrollbar-thumb-slate-200">
             <table className="wh-table">
               <thead>
                 <tr>
-                  <th>Mã SP</th>
-                  <th>Tên sản phẩm</th>
-                  <th>Danh mục</th>
-                  <th>Tồn kho</th>
-                  <th>Tối thiểu</th>
-                  <th>Trạng thái</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Mã SP</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tên sản phẩm</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Danh mục</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tồn kho</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tối thiểu</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>

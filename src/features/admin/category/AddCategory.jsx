@@ -13,25 +13,32 @@ const AddCategory = () => {
   const icons = ['📦', '△', '🧊', '🚚', '🏪', 'qr', '🏗️', '🤖', '💻', '📠'];
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-10">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
-      {/* Breadcrumb & Tiêu đề */}
-      <div className="mt-4">
-        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex gap-2">
-          <Link to="/home" className="hover:text-[#00288E] transition-colors">Kho hàng</Link>
-          <span>›</span>
-          <Link to="/home/categories" className="hover:text-[#00288E] transition-colors">Quản lý danh mục</Link>
-          <span>›</span>
-          <span className="text-[#00288E]">Thêm mới</span>
+      {/* Header */}
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
+        <div>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm danh mục mới</h1>
         </div>
-        <h1 className="text-3xl font-bold text-slate-800 font-manrope">Thêm danh mục mới</h1>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => navigate('/admin/categories')}
+            className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            Hủy bỏ
+          </button>
+          <button className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2">
+            <span className="material-symbols-outlined text-xl">save</span> Lưu danh mục
+          </button>
+        </div>
       </div>
 
-      {/* Bố cục 2 cột */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        
-        {/* CỘT TRÁI: Form nhập liệu (Chiếm 2 phần) */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-[0_2px_20px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col gap-6">
+      {/* Content - Cuộn nội bộ */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          
+          {/* CỘT TRÁI: Form nhập liệu (Chiếm 2 phần) */}
+          <div className="xl:flex-[2] bg-white rounded-3xl p-8 shadow-[0_2px_20px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col gap-6">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -94,23 +101,10 @@ const AddCategory = () => {
             </div>
           </div>
 
-          {/* Các nút hành động */}
-          <div className="flex justify-end items-center gap-4 mt-4 pt-6 border-t border-slate-100">
-            <button 
-              onClick={() => navigate('/home/categories')}
-              className="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
-            >
-              Hủy bỏ
-            </button>
-            <button className="px-8 py-3 bg-[#00288E] hover:bg-[#1e40af] text-white rounded-xl text-sm font-bold shadow-md transition-all">
-              Lưu danh mục
-            </button>
-          </div>
-
         </div>
 
         {/* CỘT PHẢI: Live Preview & Hướng dẫn (Chiếm 1 phần) */}
-        <div className="flex flex-col gap-6">
+        <div className="xl:flex-[1] flex flex-col gap-6">
           
           {/* Box 1: Xem trước thẻ (Live Preview) */}
           <div className="bg-[#1e3a8a] rounded-3xl p-6 shadow-lg text-white relative overflow-hidden">
@@ -164,6 +158,7 @@ const AddCategory = () => {
             </ul>
           </div>
 
+        </div>
         </div>
       </div>
     </div>

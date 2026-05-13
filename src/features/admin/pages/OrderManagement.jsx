@@ -39,28 +39,34 @@ const OrderManagement = () => {
 
   // NẾU KHÔNG THÌ HIỂN THỊ MÀN HÌNH DANH SÁCH BÌNH THƯỜNG
   return (
-    <div className="flex flex-col gap-6">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
-      {/* Tiêu đề & Nút thao tác */}
-      <div className="flex justify-between items-end">
+      {/* Header */}
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <h2 className="text-2xl font-bold text-[#1e3a8a] font-manrope">Quản lý Đơn hàng</h2>
-          <p className="text-sm text-slate-500 mt-1">Thứ Hai, 24 Tháng 5, 2024</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý Đơn hàng</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-lg leading-relaxed">
+            Thứ Hai, 24 Tháng 5, 2024
+          </p>
         </div>
+        
         <div className="flex gap-3">
           <button className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
-            <span>📥</span> XUẤT EXCEL
+            <span className="material-symbols-outlined text-xl">download</span> Xuất Excel
           </button>
           
-          {/* SỰ KIỆN CLICK CHUYỂN TRANG Ở ĐÂY */}
           <button 
             onClick={() => setIsCreating(true)}
-            className="bg-[#00288E] hover:bg-[#1e40af] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm flex items-center gap-2"
+            className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap"
           >
-            <span>+</span> TẠO ĐƠN MỚI
+            <span className="material-symbols-outlined text-xl">add_circle</span> Tạo đơn mới
           </button>
         </div>
       </div>
+
+      {/* Content - Cuộn nội bộ */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col gap-4 mx-2 md:mx-0">
 
       {/* 4 Cards Thống kê */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -192,6 +198,8 @@ const OrderManagement = () => {
           </div>
         </div>
 
+      </div>
+        </div>
       </div>
     </div>
   );

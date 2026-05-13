@@ -29,22 +29,24 @@ const CreateOrder = ({ onBack }) => {
   const finalTotal = subTotal + tax - discount; // Tổng thanh toán cuối
 
   return (
-    <div className="flex flex-col gap-6 bg-[#f8fafc] min-h-screen p-2 rounded-xl">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
       
       {/* Header Tạo Đơn Mới */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="w-10 h-10 flex items-center justify-center bg-slate-100 rounded-lg hover:bg-slate-200 transition">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          </button>
-          <div>
-            <h2 className="text-xl font-bold text-[#0f172a]">Tạo Đơn hàng Mới</h2>
-            <p className="text-xs text-slate-500 mt-1">Hệ thống quản lý bán hàng Hola Ledger • Đơn hàng #ORD-2023-0892</p>
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
+        <div>
+          <div className="flex items-center gap-3">
+            <button onClick={onBack} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition shadow-sm">
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Tạo Đơn hàng Mới</h1>
           </div>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-lg leading-relaxed">
+            Hệ thống quản lý bán hàng Hola Ledger • Đơn hàng #ORD-2023-0892
+          </p>
         </div>
         
         {/* Stepper */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100 hidden md:flex">
+        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100 hidden md:flex mt-4">
           <div className="flex items-center gap-2 bg-[#00288E] text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm">
             <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">1</span> Khách hàng
           </div>
@@ -57,9 +59,10 @@ const CreateOrder = ({ onBack }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CỘT TRÁI */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col xl:flex-row gap-6 mx-2 md:mx-0">
+          {/* CỘT TRÁI */}
+          <div className="xl:flex-[2] flex flex-col gap-6">
           
           {/* Thông tin khách hàng */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
@@ -176,8 +179,8 @@ const CreateOrder = ({ onBack }) => {
         </div>
 
         {/* CỘT PHẢI - THANH TOÁN (DATA ĐỘNG) */}
-        <div className="col-span-1">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden sticky top-6">
+        <div className="xl:flex-[1] flex flex-col gap-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden sticky top-0">
             
             {/* TỔNG THANH TOÁN */}
             <div className="bg-[#00288E] p-6 text-white">
@@ -244,6 +247,7 @@ const CreateOrder = ({ onBack }) => {
         </div>
       </div>
     </div>
+  </div>
   );
 };
 

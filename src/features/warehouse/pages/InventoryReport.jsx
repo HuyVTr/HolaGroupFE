@@ -88,7 +88,7 @@ const InventoryReport = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="font-inter flex-1 flex flex-col gap-5 min-h-0">
       {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-[300] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 wh-animate-scale-in">
@@ -100,8 +100,8 @@ const InventoryReport = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-1">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 uppercase tracking-tight">Báo cáo tồn kho</h1>
-          <p className="text-sm text-gray-500 font-medium">Tổng hợp số lượng và giá trị hàng tồn kho</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Báo cáo tồn kho</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">Tổng hợp số lượng và giá trị hàng tồn kho</p>
         </div>
         <button onClick={handleExportExcel} className="wh-btn-primary">
           <span className="material-symbols-outlined text-lg">download</span>
@@ -174,26 +174,26 @@ const InventoryReport = () => {
       </div>
 
       {/* Table */}
-      <div className="wh-card overflow-hidden">
+      <div className="wh-card flex-1 flex flex-col overflow-hidden min-h-0">
         {filteredProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="material-symbols-outlined text-6xl text-gray-200 mb-3">search_off</span>
             <p className="text-sm font-bold text-gray-400">Không tìm thấy sản phẩm nào</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200">
             <table className="wh-table">
               <thead>
                 <tr>
-                  <th>Mã SP</th>
-                  <th>Tên sản phẩm</th>
-                  <th>Danh mục</th>
-                  <th>ĐVT</th>
-                  <th className="text-right">Tồn kho</th>
-                  <th className="text-right">Tối thiểu</th>
-                  <th className="text-right">Đơn giá</th>
-                  <th className="text-right">Giá trị tồn</th>
-                  <th>Trạng thái</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Mã SP</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tên sản phẩm</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Danh mục</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">ĐVT</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Tồn kho</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Tối thiểu</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Đơn giá</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10 text-right">Giá trị tồn</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,8 +217,8 @@ const InventoryReport = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-gray-200 bg-gray-50">
+              <tfoot className="sticky bottom-0 bg-[#F8FAFC] z-10 border-t-2 border-gray-200">
+                <tr>
                   <td colSpan={4} className="font-extrabold text-gray-900 uppercase text-xs tracking-wider">Tổng cộng</td>
                   <td className="text-right font-extrabold text-gray-900">{totalItems.toLocaleString('vi-VN')}</td>
                   <td></td>

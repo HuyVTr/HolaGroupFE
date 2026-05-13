@@ -57,126 +57,133 @@ const CustomerList = () => {
   };
 
   return (
-    <div className="w-full font-sans text-[#191c1e] min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6">
+      
+      {/* Header - Cố định */}
+      <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <h1 className="text-3xl font-manrope font-bold text-[#00288E] mb-1">Hồ sơ Khách hàng</h1>
-          <p className="text-[#444653] text-sm">Quản lý và theo dõi thông tin chi tiết các đối tác chiến lược.</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Hồ sơ Khách hàng</h1>
         </div>
         
         <button 
-          onClick={() => navigate('/home/customers/add')}
-          className="bg-gradient-to-r from-[#00288E] to-[#1e40af] text-white px-6 py-3 rounded-xl font-medium text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+          onClick={() => navigate('/admin/customers/add')}
+          className="bg-gradient-to-r from-[#00288E] to-[#1e40af] text-white px-6 py-3 rounded-xl font-medium text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 shrink-0 whitespace-nowrap"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-          Thêm mới khách hàng
+          <span className="material-symbols-outlined text-[20px]">person_add</span>
+          Thêm khách hàng
         </button>
       </div>
 
-      {/* Thẻ Thống kê */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs text-[#444653] font-semibold mb-2">TỔNG KHÁCH HÀNG</p>
-          <h2 className="text-3xl font-manrope font-bold text-[#00288E] mb-2">{customers.length}</h2>
-          <p className="text-xs text-green-600 flex items-center gap-1 font-medium">
-            <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span> +12% tháng này
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs text-[#444653] font-semibold mb-2">KHÁCH HÀNG VIP</p>
-          <h2 className="text-3xl font-manrope font-bold text-[#00288E] mb-2">142</h2>
-          <p className="text-xs text-blue-600 flex items-center gap-1 font-medium">
-            <span className="w-2 h-2 bg-blue-500 rounded-full inline-block"></span> Top 10% doanh thu
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs text-[#444653] font-semibold mb-2">DOANH THU TRUNG BÌNH</p>
-          <h2 className="text-3xl font-manrope font-bold text-[#00288E] mb-2">14.2M</h2>
-          <p className="text-xs text-[#444653] font-medium">VNĐ / Mỗi khách hàng</p>
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-          <p className="text-xs text-[#444653] font-semibold mb-2">TỶ LỆ GIỮ CHÂN</p>
-          <h2 className="text-3xl font-manrope font-bold text-[#00288E] mb-4">92%</h2>
-          <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-[#00288E] w-[92%] h-full"></div>
+      {/* Content - Cuộn nội bộ */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 pr-1 md:pr-2 pb-4">
+        <div className="flex flex-col gap-6">
+
+          {/* Thẻ Thống kê */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 shrink-0 px-2 md:px-0">
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-xs text-[#444653] font-semibold mb-2">TỔNG KHÁCH HÀNG</p>
+              <h2 className="text-3xl font-bold text-[#00288E] mb-2">{customers.length}</h2>
+              <p className="text-xs text-green-600 flex items-center gap-1 font-medium">
+                <span className="w-2 h-2 bg-green-500 rounded-full inline-block"></span> +12% tháng này
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-xs text-[#444653] font-semibold mb-2">KHÁCH HÀNG VIP</p>
+              <h2 className="text-3xl font-bold text-[#00288E] mb-2">142</h2>
+              <p className="text-xs text-blue-600 flex items-center gap-1 font-medium">
+                <span className="w-2 h-2 bg-blue-500 rounded-full inline-block"></span> Top 10% doanh thu
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-xs text-[#444653] font-semibold mb-2">DOANH THU TRUNG BÌNH</p>
+              <h2 className="text-3xl font-bold text-[#00288E] mb-2">14.2M</h2>
+              <p className="text-xs text-[#444653] font-medium">VNĐ / Mỗi khách hàng</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <p className="text-xs text-[#444653] font-semibold mb-2">TỶ LỆ GIỮ CHÂN</p>
+              <h2 className="text-3xl font-bold text-[#00288E] mb-4">92%</h2>
+              <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-[#00288E] w-[92%] h-full"></div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Bảng dữ liệu */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-blue-50 text-[#00288E] text-sm font-medium rounded-lg">Tất cả</button>
-            <button className="px-4 py-2 text-[#444653] hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">Khách hàng VIP</button>
-            <button className="px-4 py-2 text-[#444653] hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">Khách hàng Mới</button>
-          </div>
-        </div>
+          {/* Bảng dữ liệu */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mx-2 md:mx-0 flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+              <div className="flex gap-2">
+                <button className="px-4 py-2 bg-blue-50 text-[#00288E] text-sm font-medium rounded-lg">Tất cả</button>
+                <button className="px-4 py-2 text-[#444653] hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">Khách hàng VIP</button>
+                <button className="px-4 py-2 text-[#444653] hover:bg-gray-100 text-sm font-medium rounded-lg transition-colors">Khách hàng Mới</button>
+              </div>
+            </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-100 border-b border-gray-200 text-xs text-[#444653] font-medium uppercase tracking-wider">
-                <th className="p-4 pl-6">Tên Khách Hàng</th>
-                <th className="p-4">SĐT</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Nhóm Khách Hàng</th>
-                <th className="p-4">Doanh Thu Tích Lũy</th>
-                <th className="p-4">Trạng Thái</th>
-                <th className="p-4 text-center">THAO TÁC</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((customer, index) => (
-                <tr key={index} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="p-4 pl-6 flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-semibold text-sm ${customer.avatarBg}`}>
-                      {customer.id}
-                    </div>
-                    <span className="font-medium text-[#191c1e]">{customer.name}</span>
-                  </td>
-                  <td className="p-4 text-sm text-[#444653]">{customer.phone}</td>
-                  <td className="p-4 text-sm text-[#444653]">{customer.email}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${customer.groupColor}`}>
-                      {customer.group}
-                    </span>
-                  </td>
-                  <td className="p-4 font-manrope font-bold text-[#00288E]">{customer.revenue}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${customer.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                      <span className="text-sm text-[#191c1e]">{customer.status}</span>
-                    </div>
-                  </td>
-                  
-                  {/* Cột Thao tác */}
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button 
-                        onClick={() => openEditModal(customer)}
-                        className="text-gray-400 hover:text-[#00288E] hover:bg-gray-100 transition-colors p-2 rounded-lg"
-                      >
-                        ✎
-                      </button>
-                      <button 
-                        onClick={() => openDeleteModal(customer)}
-                        className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            <div className="overflow-x-auto relative">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-gray-100 border-b border-gray-200 z-10">
+                  <tr className="text-xs text-[#444653] font-medium uppercase tracking-wider">
+                    <th className="p-4 pl-6">Tên Khách Hàng</th>
+                    <th className="p-4">SĐT</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4">Nhóm Khách Hàng</th>
+                    <th className="p-4">Doanh Thu Tích Lũy</th>
+                    <th className="p-4">Trạng Thái</th>
+                    <th className="p-4 text-center">THAO TÁC</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((customer, index) => (
+                    <tr key={index} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="p-4 pl-6 flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-semibold text-sm ${customer.avatarBg}`}>
+                          {customer.id}
+                        </div>
+                        <span className="font-medium text-[#191c1e]">{customer.name}</span>
+                      </td>
+                      <td className="p-4 text-sm text-[#444653]">{customer.phone}</td>
+                      <td className="p-4 text-sm text-[#444653]">{customer.email}</td>
+                      <td className="p-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${customer.groupColor}`}>
+                          {customer.group}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-[#00288E]">{customer.revenue}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${customer.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                          <span className="text-sm text-[#191c1e]">{customer.status}</span>
+                        </div>
+                      </td>
+                      
+                      {/* Cột Thao tác */}
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => openEditModal(customer)}
+                            className="text-gray-400 hover:text-[#00288E] hover:bg-gray-100 transition-colors p-2 rounded-lg"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                          </button>
+                          <button 
+                            onClick={() => openDeleteModal(customer)}
+                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-[#444653]">
-          <span>Hiển thị 1 - {customers.length} của {customers.length} khách hàng</span>
-          <div className="flex items-center gap-1">
-            <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#00288E] text-white font-medium">1</button>
+            <div className="p-4 border-t border-gray-100 flex items-center justify-between text-sm text-[#444653] shrink-0 bg-white">
+              <span>Hiển thị 1 - {customers.length} của {customers.length} khách hàng</span>
+              <div className="flex items-center gap-1">
+                <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#00288E] text-white font-medium">1</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

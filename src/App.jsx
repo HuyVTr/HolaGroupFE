@@ -1,14 +1,20 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-import LoginPage from './features/auth/LoginPage';
+import LoginPage from './features/auth/login';
 import MainLayout from './components/Layout/MainLayout';
+import AdminLayout from './features/admin/components/Layout/AdminLayout';
+import SalesLayout from './features/sales/components/Layout/SalesLayout';
+
+// Dashboards (Mới khởi tạo)
+import AdminDashboard from './features/admin/pages/AdminDashboard.jsx';
+import SalesDashboard from './features/sales/pages/SalesDashboard.jsx';
 
 // Sales & Admin (Từ GitHub - Đã Pull về)
 import CustomerList from './features/sales/CustomerList';
 import CustomerCreate from './features/sales/CustomerCreate';
 import OrderManager from './features/admin/pages/OrderManagement';
-import StaffCreate from './features/staffs/StaffCreate.jsx';
+import StaffCreate from './features/admin/staffs/StaffCreate.jsx';
 import ProductManagement from './features/admin/products/ProductManagement.jsx';
 import AddProduct from './features/admin/products/AddProduct.jsx';
 import CategoryManagement from './features/admin/category/CategoryManagement.jsx';
@@ -26,7 +32,7 @@ import PaymentDetail from './features/accounting/payments/detail.jsx';
 import AccountingReport from './features/accounting/reports/accounting/index.jsx';
 import AccountingLayout from './features/accounting/components/Layout/AccountingLayout';
 import TransactionDetail from './features/accounting/dashboard/TransactionDetail.jsx';
-import StaffManagement from './features/staffs/StaffManagement.jsx';
+import StaffManagement from './features/admin/staffs/StaffManagement.jsx';
 
 // Kho hàng (Warehouse Module)
 import WarehouseLayout from './features/warehouse/components/Layout/WarehouseLayout';
@@ -41,25 +47,32 @@ function App() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       
-      {/* Tuyến đường Sales & Admin sử dụng MainLayout (Cấu trúc mới từ GitHub) */}
+      {/* Tuyến đường Home chính - chọn các module */}
       <Route path="/home" element={<MainLayout />}>
-        {/* Đường dẫn mặc định khi vào /home */}
-        <Route index element={<div className="p-4">Đây là trang Dashboard tổng quan</div>} />
-        
-        {/* Tuyến đường con: /home/customers và /home/orders */}
+        <Route index element={<div className="p-4 flex h-full items-center justify-center text-gray-500">Vui lòng chọn một Module từ Sidebar để tiếp tục</div>} />
+      </Route>
+      
+      {/* Tuyến đường Admin Module */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
         <Route path="customers" element={<CustomerList />} />
         <Route path="customers/add" element={<CustomerCreate />} />
-        <Route path="orders" element={<OrderManager />} />
         <Route path="staffs" element={<StaffManagement />} />
         <Route path="staffs/add" element={<StaffCreate />} />
         <Route path="products" element={<ProductManagement />} />
         <Route path="products/add" element={<AddProduct />} />
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="categories/add" element={<AddCategory />} />
+      </Route>
+
+      {/* Tuyến đường Sales Module */}
+      <Route path="/sales" element={<SalesLayout />}>
+        <Route index element={<SalesDashboard />} />
+        <Route path="orders" element={<OrderManager />} />
         <Route path="prices" element={<PriceManagement />} />
         <Route path="prices/add" element={<PriceCreate />} />
       </Route>
-      
+
       {/* Tuyến đường Kế toán sử dụng AccountingLayout (Phát triển cục bộ) */}
       <Route path="/accounting" element={<AccountingLayout />}>
         <Route index element={<AccountingDashboard />} />

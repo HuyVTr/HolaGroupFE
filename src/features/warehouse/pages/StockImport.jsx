@@ -127,7 +127,7 @@ const StockImport = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col gap-5">
+    <div className="font-inter flex-1 flex flex-col gap-5 min-h-0">
       {/* Toast */}
       {showToast && (
         <div className="fixed top-4 right-4 z-[300] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 wh-animate-scale-in">
@@ -139,8 +139,8 @@ const StockImport = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 px-1">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 uppercase tracking-tight">Quản lý nhập kho</h1>
-          <p className="text-sm text-gray-500 font-medium">Tạo phiếu nhập kho mới và xem lịch sử nhập hàng</p>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý nhập kho</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">Tạo phiếu nhập kho mới và xem lịch sử nhập hàng</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="wh-btn-primary">
           <span className="material-symbols-outlined text-lg">{showForm ? 'close' : 'add'}</span>
@@ -258,7 +258,7 @@ const StockImport = () => {
       )}
 
       {/* Import History */}
-      <div className="wh-card overflow-hidden">
+      <div className="wh-card flex-1 flex flex-col overflow-hidden min-h-0">
         <div className="p-5 border-b border-gray-100">
           <h3 className="text-base font-extrabold text-gray-900 uppercase tracking-tight">Lịch sử nhập kho</h3>
           <p className="text-xs text-gray-400 font-bold mt-0.5">Các phiếu nhập kho đã thực hiện</p>
@@ -270,17 +270,17 @@ const StockImport = () => {
             <p className="text-sm font-bold text-gray-400">Chưa có phiếu nhập kho nào</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-200">
             <table className="wh-table">
               <thead>
                 <tr>
-                  <th>Mã phiếu</th>
-                  <th>Ngày nhập</th>
-                  <th>Nhà cung cấp</th>
-                  <th>Sản phẩm</th>
-                  <th>Tổng giá trị</th>
-                  <th>Người tạo</th>
-                  <th>Trạng thái</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Mã phiếu</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Ngày nhập</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Nhà cung cấp</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Sản phẩm</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Tổng giá trị</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Người tạo</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Trạng thái</th>
                 </tr>
               </thead>
               <tbody>
