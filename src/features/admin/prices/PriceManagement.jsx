@@ -144,7 +144,7 @@ const PriceManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
-          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý bảng giá</h1>
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý báo giá</h1>
           <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-lg leading-relaxed">
             Kiểm soát dòng tiền và hiệu quả kinh doanh của hệ thống.
           </p>
@@ -154,7 +154,7 @@ const PriceManagement = () => {
           onClick={() => navigate('/home/prices/add')}
           className="bg-[#00288E] hover:bg-[#00288E]/90 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-sm transition-colors flex items-center gap-2 whitespace-nowrap"
         >
-          <span className="material-symbols-outlined text-xl">add_circle</span> Tạo bảng giá mới
+          <span className="material-symbols-outlined text-xl">add_circle</span> Tạo báo giá mới
         </button>
       </div>
 
@@ -275,18 +275,34 @@ const PriceManagement = () => {
                     </td>
                     
                     <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1">
                         <button 
-                          onClick={() => openEditModal(qt)}
-                          className="text-gray-400 hover:text-[#00288E] hover:bg-gray-50 transition-colors p-2 rounded-lg"
+                          title="Gửi email báo giá"
+                          className="text-gray-400 hover:text-[#00288E] hover:bg-blue-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
+                          onClick={() => showToastMsg(`Đã gửi email báo giá ${qt.id} cho ${qt.email} thành công!`)}
                         >
-                          ✎
+                          <span className="material-symbols-outlined text-[20px]">mail</span>
                         </button>
                         <button 
-                          onClick={() => openDeleteModal(qt)}
-                          className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
+                          title="Chuyển thành đơn hàng"
+                          className="text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
+                          onClick={() => showToastMsg(`Đã chuyển báo giá ${qt.id} thành đơn hàng!`)}
                         >
-                          🗑
+                          <span className="material-symbols-outlined text-[20px]">shopping_cart_checkout</span>
+                        </button>
+                        <button 
+                          title="Chỉnh sửa"
+                          onClick={() => openEditModal(qt)}
+                          className="text-gray-400 hover:text-[#00288E] hover:bg-gray-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">edit</span>
+                        </button>
+                        <button 
+                          title="Xóa báo giá"
+                          onClick={() => openDeleteModal(qt)}
+                          className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">delete</span>
                         </button>
                       </div>
                     </td>

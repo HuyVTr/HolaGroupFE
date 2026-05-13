@@ -16,7 +16,7 @@ const CustomerCreate = () => {
     alert("Đã thêm khách hàng mới thành công!");
     
     // Sau khi lưu xong thì tự động quay về trang danh sách
-    navigate('/admin/customers');
+    navigate('/sales/customers');
   };
 
   return (
@@ -29,7 +29,7 @@ const CustomerCreate = () => {
         </div>
         <div className="flex gap-3">
           <button 
-            onClick={() => navigate('/admin/customers')}
+            onClick={() => navigate('/sales/customers')}
             className="px-5 py-2.5 rounded-lg font-semibold text-sm border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm"
           >
             Hủy bỏ

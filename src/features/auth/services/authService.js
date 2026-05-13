@@ -41,7 +41,17 @@ export const authService = {
     } else {
       try {
         const response = await apiClient.post('/api/auth/login', { email, password });
-        return response.data;
+        const data = response.data;
+        
+        if (data.success) {
+          // Lưu token và user vào localStorage cho cả 2 kiểu đặt tên cũ và mới trong dự án
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('current_user', JSON.stringify(data.user));
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        
+        return data;
       } catch (error) {
         return { success: false, message: error.response?.data?.message || 'Đăng nhập thất bại' };
       }

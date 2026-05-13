@@ -63,10 +63,13 @@ const CustomerList = () => {
       <div className="flex justify-between items-start shrink-0 px-2 md:px-0">
         <div>
           <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Hồ sơ Khách hàng</h1>
+          <p className="text-sm sm:text-base text-slate-600 font-medium mt-1 max-w-lg leading-relaxed">
+            Quản lý thông tin khách hàng, nhóm đối tượng và doanh thu tích lũy.
+          </p>
         </div>
         
         <button 
-          onClick={() => navigate('/admin/customers/add')}
+          onClick={() => navigate('/sales/customers/add')}
           className="bg-gradient-to-r from-[#00288E] to-[#1e40af] text-white px-6 py-3 rounded-xl font-medium text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 shrink-0 whitespace-nowrap"
         >
           <span className="material-symbols-outlined text-[20px]">person_add</span>
@@ -157,16 +160,25 @@ const CustomerList = () => {
                       
                       {/* Cột Thao tác */}
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           <button 
+                            title="Lịch sử giao dịch"
+                            className="text-gray-400 hover:text-[#00288E] hover:bg-blue-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
+                            onClick={() => showToastMsg(`Đang mở lịch sử giao dịch của ${customer.name}...`)}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">history</span>
+                          </button>
+                          <button 
+                            title="Chỉnh sửa"
                             onClick={() => openEditModal(customer)}
-                            className="text-gray-400 hover:text-[#00288E] hover:bg-gray-100 transition-colors p-2 rounded-lg"
+                            className="text-gray-400 hover:text-[#00288E] hover:bg-gray-100 transition-colors p-1.5 rounded-lg flex items-center justify-center"
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                           </button>
                           <button 
+                            title="Xóa khách hàng"
                             onClick={() => openDeleteModal(customer)}
-                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-2 rounded-lg"
+                            className="text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors p-1.5 rounded-lg flex items-center justify-center"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>
                           </button>

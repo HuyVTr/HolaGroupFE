@@ -13,8 +13,10 @@ const SalesSidebar = ({ isOpen, onClose }) => {
 
   const menuItems = [
     { name: 'Bảng điều khiển', path: '/sales', icon: 'dashboard', end: true },
+    { name: 'Khách hàng', path: '/sales/customers', icon: 'groups' },
+    { name: 'Sản phẩm', path: '/sales/products', icon: 'inventory_2' },
     { name: 'Đơn hàng', path: '/sales/orders', icon: 'shopping_cart' },
-    { name: 'Bảng giá', path: '/sales/prices', icon: 'sell' },
+    { name: 'Báo giá', path: '/sales/prices', icon: 'sell' },
   ];
 
   const user = JSON.parse(localStorage.getItem('user')) || {
