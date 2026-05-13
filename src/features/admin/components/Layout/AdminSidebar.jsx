@@ -14,7 +14,6 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   const menuItems = [
     { name: 'Bảng điều khiển', path: '/admin', icon: 'dashboard', end: true },
     { name: 'Nhân sự', path: '/admin/staffs', icon: 'person' },
-    { name: 'Khách hàng', path: '/admin/customers', icon: 'groups' },
     { name: 'Quản lý Sản phẩm', path: '/admin/products', icon: 'inventory_2' },
     { name: 'Quản lý Danh mục', path: '/admin/categories', icon: 'category' },
   ];

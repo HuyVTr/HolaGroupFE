@@ -6,23 +6,24 @@ import MainLayout from './components/Layout/MainLayout';
 import AdminLayout from './features/admin/components/Layout/AdminLayout';
 import SalesLayout from './features/sales/components/Layout/SalesLayout';
 
-// Dashboards (Mới khởi tạo)
+// === MODULE ADMIN ===
 import AdminDashboard from './features/admin/pages/AdminDashboard.jsx';
-import SalesDashboard from './features/sales/pages/SalesDashboard.jsx';
-
-// Sales & Admin (Từ GitHub - Đã Pull về)
-import CustomerList from './features/sales/CustomerList';
-import CustomerCreate from './features/sales/CustomerCreate';
-import OrderManager from './features/admin/pages/OrderManagement';
+import StaffManagement from './features/admin/staffs/StaffManagement.jsx';
 import StaffCreate from './features/admin/staffs/StaffCreate.jsx';
 import ProductManagement from './features/admin/products/ProductManagement.jsx';
 import AddProduct from './features/admin/products/AddProduct.jsx';
 import CategoryManagement from './features/admin/category/CategoryManagement.jsx';
 import AddCategory from './features/admin/category/AddCategory.jsx';
-import PriceManagement from './features/admin/prices/PriceManagement.jsx';
-import PriceCreate from './features/admin/prices/AddPrice.jsx';
 
-// Kế toán (Accounting Module - Phát triển cục bộ)
+// === MODULE SALES ===
+import SalesDashboard from './features/sales/pages/SalesDashboard.jsx';
+import CustomerList from './features/sales/CustomerList';
+import CustomerCreate from './features/sales/CustomerCreate';
+import OrderManager from './features/admin/pages/OrderManagement'; // Dùng chung từ admin
+import PriceManagement from './features/admin/prices/PriceManagement.jsx'; // Dùng chung từ admin
+import PriceCreate from './features/admin/prices/AddPrice.jsx'; // Dùng chung từ admin
+
+// === MODULE KẾ TOÁN (Accounting) ===
 import AccountingDashboard from './features/accounting/dashboard/index.jsx';
 import InvoiceList from './features/accounting/invoices/index.jsx';
 import InvoiceDetail from './features/accounting/invoices/invoice_details.jsx';
@@ -32,9 +33,8 @@ import PaymentDetail from './features/accounting/payments/detail.jsx';
 import AccountingReport from './features/accounting/reports/accounting/index.jsx';
 import AccountingLayout from './features/accounting/components/Layout/AccountingLayout';
 import TransactionDetail from './features/accounting/dashboard/TransactionDetail.jsx';
-import StaffManagement from './features/admin/staffs/StaffManagement.jsx';
 
-// Kho hàng (Warehouse Module)
+// === MODULE KHO HÀNG (Warehouse) ===
 import WarehouseLayout from './features/warehouse/components/Layout/WarehouseLayout';
 import WarehouseDashboard from './features/warehouse/pages/WarehouseDashboard';
 import DeliveryOrders from './features/warehouse/pages/DeliveryOrders';
@@ -55,8 +55,6 @@ function App() {
       {/* Tuyến đường Admin Module */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
-        <Route path="customers" element={<CustomerList />} />
-        <Route path="customers/add" element={<CustomerCreate />} />
         <Route path="staffs" element={<StaffManagement />} />
         <Route path="staffs/add" element={<StaffCreate />} />
         <Route path="products" element={<ProductManagement />} />
@@ -68,6 +66,9 @@ function App() {
       {/* Tuyến đường Sales Module */}
       <Route path="/sales" element={<SalesLayout />}>
         <Route index element={<SalesDashboard />} />
+        <Route path="customers" element={<CustomerList />} />
+        <Route path="customers/add" element={<CustomerCreate />} />
+        <Route path="products" element={<ProductManagement />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="prices" element={<PriceManagement />} />
         <Route path="prices/add" element={<PriceCreate />} />
