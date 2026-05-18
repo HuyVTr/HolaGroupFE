@@ -23,6 +23,7 @@ const AddProduct = () => {
   const [salePrice, setSalePrice] = useState('');
   const [importPrice, setImportPrice] = useState('');
   const [stock, setStock] = useState('0');
+  const [addStock, setAddStock] = useState('0');
   const [lowStockAlert, setLowStockAlert] = useState('10');
   const [categoryID, setCategoryID] = useState('');
   const [unit, setUnit] = useState('m2');
@@ -167,6 +168,10 @@ const AddProduct = () => {
       showToastMsg('Số lượng tồn kho ban đầu không được nhỏ hơn 0!', 'error');
       return;
     }
+    if (isEditMode && addStock !== '' && (isNaN(Number(addStock)) || Number(addStock) < 0)) {
+      showToastMsg('Số lượng tồn kho cộng thêm không được nhỏ hơn 0!', 'error');
+      return;
+    }
     if (lowStockAlert !== '' && (isNaN(Number(lowStockAlert)) || Number(lowStockAlert) < 0)) {
       showToastMsg('Ngưỡng cảnh báo tồn kho không được nhỏ hơn 0!', 'error');
       return;
@@ -192,11 +197,15 @@ const AddProduct = () => {
       }
 
       // 2. Tạo dữ liệu lưu trữ chuẩn
+      const finalStock = isEditMode
+        ? Number(stock || 0) + Number(addStock || 0)
+        : Number(stock || 0);
+
       const payload = {
         productName: productName.trim(),
         salePrice: Number(salePrice),
         cost: importPrice ? Number(importPrice) : null,
-        stock: stock ? Number(stock) : 0,
+        stock: finalStock,
         lowStockAlert: lowStockAlert ? Number(lowStockAlert) : 10,
         unit,
         status: status ? 'ACTIVE' : 'INACTIVE',
@@ -379,21 +388,47 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className={`grid grid-cols-1 ${isEditMode ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-8`}>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Số lượng tồn kho ban đầu</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
+                    {isEditMode ? 'Số lượng tồn kho hiện tại' : 'Số lượng tồn kho ban đầu'}
+                  </label>
                   <input 
                     type="number" 
                     min="0"
                     value={stock}
+                    disabled={isEditMode}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val !== '' && Number(val) < 0) return;
                       setStock(val);
                     }}
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all text-slate-700" 
+                    className={`w-full border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all ${
+                      isEditMode 
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-dashed border-slate-200' 
+                        : 'bg-slate-50 text-slate-700'
+                    }`} 
                   />
                 </div>
+
+                {isEditMode && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#00288E] uppercase tracking-[0.2em] ml-1">Nhập thêm kho (+)</label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={addStock}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== '' && Number(val) < 0) return;
+                        setAddStock(val);
+                      }}
+                      placeholder="0"
+                      className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-300 focus:bg-white transition-all text-[#00288E] placeholder-blue-300" 
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Ngưỡng cảnh báo tồn kho</label>
                   <input 
