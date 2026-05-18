@@ -5,11 +5,63 @@ import Header from '../../../../components/Layout/Header';
 
 const SalesLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+  // Ngưỡng vuốt ngang tối thiểu để kích hoạt đóng/mở sidebar (px)
+  const minSwipeDistance = 50;
+
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    const clientX = e.targetTouches[0].clientX;
+    const clientY = e.targetTouches[0].clientY;
+
+    // Khi sidebar đang đóng: chỉ cho phép vuốt khi điểm chạm bắt đầu ở mép trái màn hình (trong khoảng 45px đầu tiên)
+    // Khi sidebar đang mở: cho phép chạm bắt đầu ở bất cứ đâu để vuốt đóng
+    if (!isSidebarOpen && clientX > 45) {
+      setTouchStart(null);
+      return;
+    }
+
+    setTouchStart({ x: clientX, y: clientY });
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchStart) return;
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distanceX = touchEnd.x - touchStart.x;
+    const distanceY = touchEnd.y - touchStart.y;
+
+    // Đảm bảo cử chỉ vuốt là theo chiều ngang (tránh xung đột với cuộn dọc trang)
+    if (Math.abs(distanceX) > Math.abs(distanceY)) {
+      // Vuốt từ trái sang phải -> Mở Sidebar
+      if (distanceX > minSwipeDistance && !isSidebarOpen) {
+        setIsSidebarOpen(true);
+      }
+      // Vuốt từ phải sang trái -> Đóng Sidebar
+      else if (distanceX < -minSwipeDistance && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    }
+  };
+
   return (
-    <div className="sales-layout-root flex h-screen overflow-hidden bg-slate-50 relative">
+    <div 
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      className="sales-layout-root flex h-screen overflow-hidden bg-slate-50 relative select-none md:select-auto"
+    >
       <style>{`
         @media (max-height: 600px) and (max-width: 1024px) {
           .sales-layout-root {
@@ -36,15 +88,6 @@ const SalesLayout = () => {
           }
         }
       `}</style>
-
-      <button 
-        onClick={toggleSidebar}
-        className="xl:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#00288E] text-white rounded-2xl shadow-2xl flex items-center justify-center z-[120] active:scale-90 transition-transform"
-      >
-        <span className="material-symbols-outlined text-3xl">
-          {isSidebarOpen ? 'close' : 'menu'}
-        </span>
-      </button>
 
       <SalesSidebar 
         isOpen={isSidebarOpen} 

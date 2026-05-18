@@ -198,9 +198,9 @@ const AccountingDashboard = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 px-1 shrink-0">
         <div className="space-y-2">
           <h1 className="text-acc-text-main leading-tight font-black text-3xl sm:text-4xl lg:text-[2rem] uppercase tracking-tight">TRUNG TÂM TÀI CHÍNH</h1>
-          <p className="text-sm sm:text-base text-acc-text-muted flex items-center gap-2 font-medium">
-            Phân tích dữ liệu 
-            <span className="text-acc-primary font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in" key={`${timeframe}-${selectedDay}-${filterWeek}-${filterYear}`}>
+          <p className="text-sm sm:text-base text-acc-text-muted font-medium leading-relaxed">
+            Phân tích dữ liệu{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-acc-primary font-bold whitespace-nowrap animate-fade-in" key={`${timeframe}-${selectedDay}-${filterWeek}-${filterYear}`}>
               {getTimeframeText()}
             </span>
           </p>

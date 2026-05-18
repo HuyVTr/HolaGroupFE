@@ -318,7 +318,7 @@ const CustomerCreate = () => {
                       onClick={() => setValue('membership', 'VIP')}
                       title="VIP Member" 
                       desc="Ưu tiên phục vụ hạng A"
-                      icon="🥇"
+                      icon={<span className="material-symbols-outlined text-[24px] font-black text-amber-500">diamond</span>}
                     />
                     <MembershipCard 
                       id="GOLD" 
@@ -326,7 +326,7 @@ const CustomerCreate = () => {
                       onClick={() => setValue('membership', 'GOLD')}
                       title="Gold Member" 
                       desc="Khách hàng thân thiết"
-                      icon="🥈"
+                      icon={<span className="material-symbols-outlined text-[24px] font-black text-yellow-500">workspace_premium</span>}
                     />
                     <MembershipCard 
                       id="SILVER" 
@@ -334,7 +334,7 @@ const CustomerCreate = () => {
                       onClick={() => setValue('membership', 'SILVER')}
                       title="Silver Member" 
                       desc="Khách hàng phổ thông"
-                      icon="🥉"
+                      icon={<span className="material-symbols-outlined text-[24px] font-black text-slate-400">military_tech</span>}
                     />
                   </div>
                 </div>
@@ -394,8 +394,8 @@ const MembershipCard = ({ active, onClick, title, desc, icon }) => (
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{desc}</p>
       </div>
     </div>
-    <span className="text-xl filter grayscale-[0.5] hover:grayscale-0 transition-all" aria-hidden="true">{icon}</span>
+    <div className={`transition-all ${active ? 'scale-110' : 'opacity-80'}`} aria-hidden="true">{icon}</div>
   </div>
 );
 
-export default CustomerCreate;
+export default CustomerCreate;

@@ -3,8 +3,16 @@ import salesService from '../../services/salesService';
 import RevenueChart from '../../components/Charts/RevenueChart';
 import DailyActivityGrid from '../../components/Charts/DailyActivityGrid';
 
-const getResponsiveValueClass = (val) => {
-  const str = String(val || '');
+const getResponsiveValueClass = (val, rawVal) => {
+  let str = '';
+  if (rawVal !== undefined && rawVal !== null) {
+    str = String(rawVal);
+    if (typeof rawVal === 'number') {
+      str += ' VND..';
+    }
+  } else if (val) {
+    str = String(val);
+  }
   const len = str.length;
   if (len <= 10) {
     return "text-base sm:text-lg lg:text-lg xl:text-xl";
@@ -328,9 +336,9 @@ const SalesDashboard = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
         <div className="space-y-1 sm:space-y-2">
           <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Bảng điều khiển Kinh doanh</h1>
-          <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-2 font-medium">
-            Phân tích dữ liệu 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in" key={getTimeframeText()}>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Phân tích dữ liệu{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={getTimeframeText()}>
               {getTimeframeText()}
             </span>
           </p>
@@ -435,7 +443,7 @@ const SalesDashboard = () => {
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight">{stat.title}</p>
-                  <div className={`mt-1 font-black text-slate-900 [font-variant-numeric:tabular-nums] break-words whitespace-normal xl:truncate xl:whitespace-nowrap ${getResponsiveValueClass(stat.value)}`} title={stat.value}>{stat.value}</div>
+                  <div className={`mt-1 font-black text-slate-900 [font-variant-numeric:tabular-nums] break-words whitespace-normal xl:truncate xl:whitespace-nowrap ${getResponsiveValueClass(stat.value, stat.rawValue)}`} title={typeof stat.value === 'object' ? stat.rawValue : stat.value}>{stat.value}</div>
                   <GrowthBadge growth={stat.growth} type={stat.type} currentValue={stat.rawValue} idx={idx} activeTooltipIdx={activeTooltipIdx} />
                 </div>
                 <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 transition-all group-hover:scale-110 ${

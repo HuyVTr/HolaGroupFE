@@ -140,9 +140,9 @@ const AddPrice = () => {
           </button>
           <div className="space-y-1">
             <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Thêm bảng giá mới</h1>
-            <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-2 font-medium">
-              Thiết lập chính sách giá mới
-              <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in">
+            <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+              Thiết lập chính sách giá mới{" "}
+              <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
                 Bản dự thảo
               </span>
             </p>

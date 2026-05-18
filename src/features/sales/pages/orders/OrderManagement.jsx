@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Drawer, Box, Typography, IconButton } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
 import CreateOrder from './CreateOrder'; 
 import salesService from '../../services/salesService';
 import OrderDetailDrawer from '../../components/Drawers/OrderDetailDrawer';
 
-const formatCurrency = (val, isSmall = false, isStat = false) => {
+const formatCurrency = (val, isSmall = false, isStat = false, alignRight = false) => {
   if (val === undefined || val === null) return "0 VND";
   
   let cleanVal = val;
@@ -29,7 +32,7 @@ const formatCurrency = (val, isSmall = false, isStat = false) => {
   }
 
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap">
+    <span className={`flex items-baseline gap-1 whitespace-nowrap ${alignRight ? 'justify-end' : ''}`}>
       <span className={isSmall ? "font-bold text-slate-800" : "font-black text-slate-800"}>{formatted}</span>
       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">VND</span>
     </span>
@@ -78,7 +81,15 @@ const getResponsiveValueClass = (val, rawVal) => {
   }
 };
 
+const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+const getFirstDayOfMonth = (year, month) => {
+  let day = new Date(year, month - 1, 1).getDay();
+  return day === 0 ? 6 : day - 1;
+};
+
 const OrderManagement = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState([]);
   
@@ -107,7 +118,7 @@ const OrderManagement = () => {
   const [showYearsCountPicker, setShowYearsCountPicker] = useState(false);
   const [yearRangeStart, setYearRangeStart] = useState(Math.floor(now.getFullYear() / 10) * 10 - 4);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerView, setDatePickerView] = useState('months');
+  const [datePickerView, setDatePickerView] = useState('days');
   const [dateTempYear, setDateTempYear] = useState(now.getFullYear());
   const [dateYearRangeStart, setDateYearRangeStart] = useState(Math.floor(now.getFullYear() / 12) * 12);
 
@@ -122,8 +133,14 @@ const OrderManagement = () => {
   ];
 
   const [activeTab, setActiveTab] = useState('Tất cả');
+  const [isOpenStatusDropdown, setIsOpenStatusDropdown] = useState(false);
   const tabs = ['Tất cả', 'Chờ xác nhận', 'Đang giao', 'Hoàn thành', 'Đã hủy'];
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedQuotation, setSelectedQuotation] = useState(null);
+  const [showQuotationSelector, setShowQuotationSelector] = useState(false);
+  const [quotationList, setQuotationList] = useState([]);
+  const [quotationSearchQuery, setQuotationSearchQuery] = useState('');
+  const [loadingQuotations, setLoadingQuotations] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,13 +151,19 @@ const OrderManagement = () => {
   const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
 
   useEffect(() => {
+    if (location.state && location.state.quotation) {
+      setIsCreating(true);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (yearPickerRef.current && !yearPickerRef.current.contains(event.target)) setShowYearPicker(false);
       if (weekPickerRef.current && !weekPickerRef.current.contains(event.target)) setShowWeekPicker(false);
       if (yearsCountPickerRef.current && !yearsCountPickerRef.current.contains(event.target)) setShowYearsCountPicker(false);
       if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
         setShowDatePicker(false);
-        setDatePickerView('months');
+        setDatePickerView('days');
       }
       if (!event.target.closest('.stat-card-container')) {
         setActiveTooltipIdx(null);
@@ -162,37 +185,71 @@ const OrderManagement = () => {
     setSortConfig({ key, direction });
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
-        const currentUser = rawUser ? JSON.parse(rawUser) : null;
-        const userID = currentUser?.userID;
-
-        const data = await salesService.getOrders(userID);
-        
-        const mappedOrders = data.map(order => ({
-          ...order,
-          id: order.displayID,
-          customer: order.customerName,
-          phone: order.customerPhone || 'N/A',
-          avatar: order.customerName.substring(0, 2).toUpperCase(),
-          date: new Date(order.createAt || order.date).toLocaleDateString('vi-VN'),
-          total: order.totalAmount,
-          rawStatus: order.orderStatus,
-          status: mapStatus(order.orderStatus)
+  const handleOpenQuotationSelector = async () => {
+    try {
+      setLoadingQuotations(true);
+      setShowQuotationSelector(true);
+      const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
+      const currentUser = rawUser ? JSON.parse(rawUser) : null;
+      const userID = currentUser?.userID;
+      
+      const qData = await salesService.getQuotations(userID);
+      const mappedQuotes = qData
+        .filter(q => {
+          const s = (q.status || q.quotationStatus || 'PENDING').toUpperCase();
+          return s === 'APPROVED' || s === 'ĐỒNG Ý' || s === 'ĐÃ DUYỆT';
+        })
+        .map(q => ({
+          ...q,
+          id: q.displayID,
+          name: q.customerName,
+          email: q.customerEmail || 'N/A',
+          group: q.customerGroup || 'STANDARD',
+          date: q.date,
+          value: q.totalAmount || 0,
+          status: q.quotationStatus || q.status || 'PENDING',
+          avatar: q.customerName.substring(0, 2).toUpperCase()
         }));
+      setQuotationList(mappedQuotes);
+    } catch (err) {
+      console.error("Lỗi khi tải báo giá:", err);
+    } finally {
+      setLoadingQuotations(false);
+    }
+  };
 
-        setOrders(mappedOrders);
-      } catch (err) {
-        console.error("Lỗi khi tải đơn hàng:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
+      const currentUser = rawUser ? JSON.parse(rawUser) : null;
+      const userID = currentUser?.userID;
+
+      const data = await salesService.getOrders(userID);
+      
+      const mappedOrders = data.map(order => ({
+        ...order,
+        id: order.displayID,
+        customer: order.customerName,
+        phone: order.customerPhone || 'N/A',
+        avatar: order.customerName.substring(0, 2).toUpperCase(),
+        date: order.date || 'N/A',
+        total: order.totalAmount,
+        rawStatus: order.orderStatus,
+        status: mapStatus(order.orderStatus)
+      }));
+
+      setOrders(mappedOrders);
+    } catch (err) {
+      console.error("Lỗi khi tải đơn hàng:", err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const mapStatus = (status) => {
     switch (status) {
@@ -377,7 +434,7 @@ const OrderManagement = () => {
       });
     }
     return result;
-  }, [orders, activeTab, searchQuery, sortConfig]);
+  }, [filteredByTimeOrders, activeTab, searchQuery, sortConfig]);
 
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
   const paginatedOrders = useMemo(() => {
@@ -409,7 +466,17 @@ const OrderManagement = () => {
   };
 
   if (isCreating) {
-    return <CreateOrder onBack={() => setIsCreating(false)} />;
+    return (
+      <CreateOrder 
+        onBack={() => {
+          setIsCreating(false);
+          setSelectedQuotation(null);
+          fetchData(true);
+          navigate(location.pathname, { replace: true, state: {} });
+        }} 
+        quotation={selectedQuotation || location.state?.quotation} 
+      />
+    );
   }
 
   if (loading) {
@@ -425,20 +492,18 @@ const OrderManagement = () => {
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
       
       {/* 1. Header Section */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 px-2 md:px-0 shrink-0">
+      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 px-1 sm:px-2 md:px-0 shrink-0">
         <div className="space-y-1 sm:space-y-2">
-          <h1 className="font-black text-slate-900 uppercase tracking-tight leading-tight"
-              style={{ fontSize: 'clamp(20px, 1.8vw, 32px)' }}>Quản lý đơn hàng</h1>
-          <p className="text-slate-500 flex items-center gap-2 font-medium"
-             style={{ fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
-            Hệ thống đang kiểm soát 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in" key={getTimeframeText()}>
+          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý đơn hàng</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Hệ thống đang kiểm soát{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={getTimeframeText()}>
               {getTimeframeText()} ({filteredOrders.length} đơn hàng)
             </span>
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row xl:items-center gap-3 w-full xl:w-auto" style={{ gap: 'clamp(6px, 0.7vw, 14px)' }}>
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto sm:justify-end" style={{ gap: 'clamp(6px, 0.7vw, 14px)' }}>
           {/* Timeframe Switcher */}
           <div className="flex bg-slate-100 border border-slate-300/50 shadow-inner w-full sm:w-max animate-fade-in" 
                style={{
@@ -478,49 +543,140 @@ const OrderManagement = () => {
                        gap: 'clamp(2px, 0.25vw, 4px)'
                      }}
                      ref={datePickerRef}>
-                  <button onClick={() => { let newM = m - 1; let newY = y; if (newM < 1) { newM = 12; newY--; } setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`); }} 
+                  <button onClick={() => {
+                            const newDate = new Date(y, m - 1, selectedDay - 1);
+                            setSelectedDay(newDate.getDate());
+                            setFilterDate(`${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`);
+                          }} 
                           className="hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 touch-manipulation"
                           style={{
                             width: 'clamp(20px, 2vw, 28px)',
                             height: 'clamp(20px, 2vw, 28px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)'
                           }}
-                          aria-label="Tháng trước">
+                          aria-label="Ngày trước">
                     <span className="material-symbols-outlined" style={{ fontSize: 'clamp(10px, 1.1vw, 16px)' }} aria-hidden="true">chevron_left</span>
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); setDateTempYear(y); setShowDatePicker(!showDatePicker); setDatePickerView('months'); }} 
+                  <button onClick={(e) => { e.stopPropagation(); setDateTempYear(y); setShowDatePicker(!showDatePicker); setDatePickerView('days'); }} 
                           className={`transition-all flex items-center hover:bg-slate-50 ${showDatePicker ? 'bg-slate-50 shadow-inner' : ''}`}
                           style={{
                             padding: 'clamp(3px, 0.35vw, 6px) clamp(6px, 0.75vw, 12px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)',
                             gap: 'clamp(4px, 0.4vw, 8px)'
                           }}>
-                    <span className="font-black text-slate-900 uppercase tracking-widest" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Tháng {m}, {y}</span>
+                    <span className="font-black text-slate-900 uppercase tracking-widest" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Ngày {selectedDay}/{m}/{y}</span>
                     <span className={`material-symbols-outlined text-slate-300 transition-transform ${showDatePicker ? 'rotate-180 text-blue-600' : ''}`} style={{ fontSize: 'clamp(9px, 0.9vw, 14px)' }}>expand_more</span>
                   </button>
                   {showDatePicker && (
                     <div className="absolute top-full mt-2 right-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-5 min-w-[320px] animate-fade-in origin-top-right">
-                      {datePickerView === 'months' ? (
+                      {datePickerView === 'days' ? (
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-50 pb-3"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span><button onClick={(e) => { e.stopPropagation(); setDatePickerView('years'); setDateYearRangeStart(Math.floor(dateTempYear / 12) * 12); }} className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">{dateTempYear} <span className="material-symbols-outlined text-[14px]">arrow_forward</span></button></div>
-                          <div className="grid grid-cols-3 gap-2">{monthNames.map((mName, idx) => (<button key={mName} onClick={() => { setFilterDate(`${dateTempYear}-${String(idx + 1).padStart(2, '0')}`); setShowDatePicker(false); }} className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>{mName}</button>))}</div>
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn ngày</span>
+                            <button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} 
+                                    className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">
+                              Tháng {m}, {y} <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => <div key={d} className="py-1">{d}</div>)}
+                          </div>
+                          <div className="grid grid-cols-7 gap-1">
+                            {Array.from({ length: getFirstDayOfMonth(y, m) }).map((_, idx) => (
+                              <div key={`empty-${idx}`} className="h-8" />
+                            ))}
+                            {Array.from({ length: getDaysInMonth(y, m) }).map((_, idx) => {
+                              const dayNum = idx + 1;
+                              const isSelected = dayNum === selectedDay;
+                              return (
+                                <button key={dayNum} 
+                                        onClick={() => { setSelectedDay(dayNum); setShowDatePicker(false); }} 
+                                        className={`h-8 w-8 text-[10px] font-black rounded-xl transition-all flex items-center justify-center ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                  {dayNum}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : datePickerView === 'months' ? (
+                        <div className="space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span>
+                            <button onClick={(e) => { e.stopPropagation(); setDatePickerView('years'); setDateYearRangeStart(Math.floor(dateTempYear / 12) * 12); }} 
+                                    className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">
+                              {dateTempYear} <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {monthNames.map((mName, idx) => (
+                              <button key={mName} 
+                                      onClick={() => { 
+                                        const newM = idx + 1;
+                                        const maxD = getDaysInMonth(dateTempYear, newM);
+                                        if (selectedDay > maxD) setSelectedDay(maxD);
+                                        setFilterDate(`${dateTempYear}-${String(newM).padStart(2, '0')}`); 
+                                        setDatePickerView('days'); 
+                                      }} 
+                                      className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                {mName}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-4 animate-fade-in">
-                          <div className="flex items-center justify-between border-b border-slate-50 pb-3"><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600"><span className="material-symbols-outlined text-[18px]">arrow_back</span></button><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span></div><div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg"><button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev - 12); }} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[16px]">chevron_left</span></button><span className="text-[9px] font-black text-slate-500 px-1">{dateYearRangeStart} - {dateYearRangeStart + 11}</span><button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev + 12); }} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[16px]">chevron_right</span></button></div></div>
-                          <div className="grid grid-cols-3 gap-2">{Array.from({length: 12}).map((_, i) => { const yearOpt = dateYearRangeStart + i; return (<button key={yearOpt} onClick={(e) => { e.stopPropagation(); setDateTempYear(yearOpt); setDatePickerView('months'); }} className={`text-[11px] font-black py-3 rounded-xl transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>{yearOpt}</button>); })}</div>
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <div className="flex items-center gap-2">
+                              <button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} 
+                                      className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600">
+                                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                              </button>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span>
+                            </div>
+                            <div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg">
+                              <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev - 12); }} 
+                                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                              </button>
+                              <span className="text-[9px] font-black text-slate-500 px-1">{dateYearRangeStart} - {dateYearRangeStart + 11}</span>
+                              <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev + 12); }} 
+                                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {Array.from({length: 12}).map((_, i) => { 
+                              const yearOpt = dateYearRangeStart + i; 
+                              return (
+                                <button key={yearOpt} 
+                                        onClick={(e) => { 
+                                          e.stopPropagation(); 
+                                          setDateTempYear(yearOpt); 
+                                          setDatePickerView('months'); 
+                                        }} 
+                                        className={`text-[11px] font-black py-3 rounded-xl transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                  {yearOpt}
+                                </button>
+                              ); 
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
                   )}
-                  <button onClick={() => { let newM = m + 1; let newY = y; if (newM > 12) { newM = 1; newY++; } setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`); }} 
+                  <button onClick={() => {
+                            const newDate = new Date(y, m - 1, selectedDay + 1);
+                            setSelectedDay(newDate.getDate());
+                            setFilterDate(`${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`);
+                          }} 
                           className="hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 touch-manipulation"
                           style={{
                             width: 'clamp(20px, 2vw, 28px)',
                             height: 'clamp(20px, 2vw, 28px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)'
                           }}
-                          aria-label="Tháng tiếp theo">
+                          aria-label="Ngày tiếp theo">
                     <span className="material-symbols-outlined" style={{ fontSize: 'clamp(10px, 1.1vw, 16px)' }} aria-hidden="true">chevron_right</span>
                   </button>
                 </div>
@@ -671,16 +827,18 @@ const OrderManagement = () => {
           
           <div className="flex w-full sm:w-auto shrink-0" style={{ gap: 'clamp(4px, 0.5vw, 12px)' }}>
             <button 
-              className="flex-1 sm:flex-none bg-white border-2 border-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-600 transition-all flex items-center justify-center active:scale-95 whitespace-nowrap"
+              onClick={handleOpenQuotationSelector}
+              className="flex-1 sm:flex-none bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50/55 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center active:scale-95 whitespace-nowrap shadow-sm hover:shadow-md"
               style={{
-                padding: 'clamp(8px, 0.9vw, 16px) clamp(16px, 1.8vw, 32px)',
+                padding: 'clamp(8px, 0.9vw, 16px) clamp(12px, 1.5vw, 24px)',
                 fontSize: 'clamp(9px, 0.75vw, 12px)',
                 borderRadius: 'clamp(8px, 0.9vw, 16px)',
-                gap: 'clamp(6px, 0.6vw, 12px)'
+                gap: 'clamp(4px, 0.4vw, 8px)'
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>download</span>
-              Xuất báo cáo
+              <span>Báo giá</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>sync_alt</span>
+              <span>Đơn hàng</span>
             </button>
             
             <button 
@@ -759,33 +917,78 @@ const OrderManagement = () => {
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#00288E] transition-colors font-bold">search</span>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-300/50 shadow-inner w-full lg:w-max overflow-x-auto no-scrollbar order-1 lg:order-2">
-              {tabs.map(tab => (
-                <button 
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
-                    activeTab === tab 
-                      ? 'bg-white text-blue-600 border-slate-200 shadow-sm' 
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-900'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            {/* Bộ lọc trạng thái kiểu Dropdown cao cấp */}
+            <div className="relative w-full lg:w-72 order-1 lg:order-2 font-inter">
+              <button
+                type="button"
+                onClick={() => setIsOpenStatusDropdown(!isOpenStatusDropdown)}
+                className="w-full bg-slate-50 border-2 border-slate-200 hover:border-[#00288E] transition-all rounded-xl px-4 py-4 flex items-center justify-between shadow-sm active:scale-95 cursor-pointer text-slate-700 focus:bg-white focus:border-[#00288E]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400 font-bold" style={{ fontSize: '18px' }}>filter_alt</span>
+                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                    {activeTab === 'Tất cả' ? 'Tất cả trạng thái' : activeTab}
+                  </span>
+                </div>
+                <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isOpenStatusDropdown ? 'rotate-180' : ''}`} style={{ fontSize: '18px' }}>
+                  keyboard_arrow_down
+                </span>
+              </button>
+
+              {isOpenStatusDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-20" 
+                    onClick={() => setIsOpenStatusDropdown(false)}
+                  />
+                  
+                  <div className="absolute right-0 top-full mt-2 w-full bg-white border-2 border-slate-200 rounded-3xl shadow-2xl z-30 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#00288E] opacity-80">CHỌN TRẠNG THÁI</span>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      {tabs.map((tab) => {
+                        const isSelected = activeTab === tab;
+                        const labelText = tab === 'Tất cả' ? 'Tất cả trạng thái' : tab;
+                        return (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab);
+                              setIsOpenStatusDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-left transition-all flex items-center justify-between active:scale-95 cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 font-black'
+                                : 'bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600'
+                            }`}
+                          >
+                            <span>{labelText}</span>
+                            {isSelected && (
+                              <span className="material-symbols-outlined text-base">check_circle</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
       </div>
 
       {/* 4. Table Area Container */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 overflow-hidden mx-2 md:mx-0 flex-1 min-h-0">
-            {/* Table Area */}
-            <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
-              <table className="w-full text-left border-collapse">
+            {/* Desktop View (Table) */}
+            <div className="hidden lg:block overflow-x-auto overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ scrollbarGutter: 'stable' }}>
+              <table className="w-full table-fixed text-left border-collapse xl:min-w-[1000px] min-w-0">
                 <thead className="bg-slate-50 sticky top-0 z-10">
-                  <tr>
+                  <tr className="bg-slate-50">
                     <th 
                       onClick={() => handleSort('id')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -797,7 +1000,7 @@ const OrderManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('customer')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[28%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -809,10 +1012,10 @@ const OrderManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('date')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
-                      style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
+                      style={{ fontSize: 'clamp(8px, 0.8vw, 11px)', textAlign: 'center' }}
                     >
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-center gap-1">
                         <span>Ngày đặt</span>
                         <span className={`material-symbols-outlined text-[13px] transition-opacity ${sortConfig.key === 'date' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
                           {sortConfig.key === 'date' && sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
@@ -821,18 +1024,18 @@ const OrderManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('total')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-right cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[17%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
-                      <div className="flex items-center gap-1 justify-end">
+                      <div className="flex items-center justify-start gap-1">
                         <span>Tổng tiền</span>
                         <span className={`material-symbols-outlined text-[13px] transition-opacity ${sortConfig.key === 'total' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
                           {sortConfig.key === 'total' && sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
                         </span>
                       </div>
                     </th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-right" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
+                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-center w-[13%]" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
+                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-center w-[8%]" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -852,12 +1055,12 @@ const OrderManagement = () => {
                       className="group hover:bg-slate-50/50 transition-all cursor-pointer"
                     >
                       <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-black text-blue-600 tracking-tighter group-hover:underline"
-                              style={{ fontSize: 'clamp(10px, 0.95vw, 13px)' }}>#{order.id}</span>
+                        <span className="font-black text-[#00288E] tracking-tight group-hover:underline underline-offset-4"
+                              style={{ fontSize: 'clamp(10px, 0.95vw, 13px)' }}>{order.id}</span>
                       </td>
                       <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         <div className="flex items-center gap-4">
-                          <div className="rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase shadow-sm group-hover:scale-110 transition-transform"
+                          <div className="rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform"
                                style={{ width: 'clamp(32px, 2.5vw, 44px)', height: 'clamp(32px, 2.5vw, 44px)', fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
                             {order.avatar}
                           </div>
@@ -869,16 +1072,18 @@ const OrderManagement = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-bold text-slate-500 uppercase"
+                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', textAlign: 'center' }}>
+                        <span className="font-bold text-slate-600 uppercase tracking-tighter"
                               style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{order.date}</span>
                       </td>
-                      <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)' }}>{formatCurrency(order.total, true)}</td>
-                      <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)', textAlign: 'left' }}>
+                        {formatCurrency(order.total, true)}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         {getStatusBadge(order.status)}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 text-right" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <button className="rounded-xl bg-slate-50 text-slate-300 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center active:scale-95"
+                      <td className="px-4 sm:px-6 py-4 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                        <button className="rounded-xl bg-slate-50 text-slate-300 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center active:scale-95 mx-auto"
                                 style={{ width: 'clamp(28px, 2.5vw, 40px)', height: 'clamp(28px, 2.5vw, 40px)' }}>
                           <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.3vw, 20px)' }}>visibility</span>
                         </button>
@@ -887,6 +1092,94 @@ const OrderManagement = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile/Tablet View (Cards) */}
+            <div className="block lg:hidden overflow-auto flex-1 p-4 bg-slate-50/50 scrollbar-thin scrollbar-thumb-slate-200">
+              
+              {/* Thanh sắp xếp thông minh khi ở chế độ card */}
+              <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sắp xếp theo</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { key: 'id', label: 'Mã đơn' },
+                    { key: 'customer', label: 'Tên' },
+                    { key: 'total', label: 'Giá trị' },
+                    { key: 'date', label: 'Ngày tạo' }
+                  ].map(item => {
+                    const isSelected = sortConfig.key === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleSort(item.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 ${
+                          isSelected 
+                            ? 'bg-[#00288E] text-white shadow-md shadow-blue-900/10' 
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {item.label}
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-[11px] font-bold">
+                            {sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {paginatedOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <span className="material-symbols-outlined text-4xl text-slate-200">inventory</span>
+                  <p className="text-xs font-bold text-slate-300 uppercase tracking-widest italic">Không tìm thấy đơn hàng nào</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {paginatedOrders.map((order, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => handleViewOrder(order)}
+                      className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#00288E] hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-98 flex flex-col justify-between h-full group"
+                    >
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase tracking-tighter text-xs shadow-sm shrink-0 border border-slate-100 group-hover:scale-105 transition-transform overflow-hidden">
+                          {order.avatar}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-black text-slate-900 uppercase tracking-tight text-xs sm:text-sm line-clamp-2 leading-tight group-hover:text-[#00288E] transition-colors">
+                            {order.customer}
+                          </div>
+                          <div className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mt-1">
+                            Mã đơn: {order.id}
+                          </div>
+                          {order.phone && (
+                            <div className="font-bold text-slate-400 text-[9px] mt-0.5">
+                              SĐT: {order.phone}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-4 mt-auto flex flex-col gap-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Ngày đặt</span>
+                          <span className="font-bold text-slate-600">{order.date}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Tổng tiền</span>
+                          <span className="font-black text-slate-900">{formatCurrency(order.total, true)}</span>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-100/60 pt-3">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Trạng thái</span>
+                          {getStatusBadge(order.status)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Pagination */}
@@ -933,6 +1226,24 @@ const OrderManagement = () => {
         open={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
         order={selectedOrder} 
+      />
+
+      <QuotationSelectorDrawer
+        open={showQuotationSelector}
+        onClose={() => {
+          setShowQuotationSelector(false);
+          setQuotationSearchQuery('');
+        }}
+        loading={loadingQuotations}
+        quotations={quotationList}
+        searchQuery={quotationSearchQuery}
+        setSearchQuery={setQuotationSearchQuery}
+        onSelect={(q) => {
+          setSelectedQuotation(q);
+          setIsCreating(true);
+          setShowQuotationSelector(false);
+          setQuotationSearchQuery('');
+        }}
       />
     </div>
   );
@@ -1055,6 +1366,499 @@ const StatCard = ({ label, value, growth, type = 'number', icon, color, rawValue
         </div>
       </div>
     </div>
+  );
+};
+
+const QuotationSelectorDrawer = ({ open, onClose, loading, quotations, searchQuery, setSearchQuery, onSelect }) => {
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [tempSelectedDate, setTempSelectedDate] = useState(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date().getMonth());
+  const [currentCalendarYear, setCurrentCalendarYear] = useState(new Date().getFullYear());
+  const [drawerCalendarView, setDrawerCalendarView] = useState('days'); // 'days' | 'months' | 'years'
+  const [drawerYearRangeStart, setDrawerYearRangeStart] = useState(Math.floor(new Date().getFullYear() / 12) * 12);
+  
+  const monthNames = [
+    "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
+    "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
+  ];
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedDate(null);
+      setTempSelectedDate(null);
+      setCalendarOpen(false);
+      setDrawerCalendarView('days');
+    }
+  }, [open]);
+
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month, year) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1;
+  };
+
+  const matchDate = (itemDateStr) => {
+    if (!selectedDate) return true;
+    if (!itemDateStr) return false;
+    
+    let itemDate;
+    if (itemDateStr.includes('/')) {
+      const [d, m, y] = itemDateStr.split('/').map(Number);
+      itemDate = new Date(y, m - 1, d);
+    } else {
+      itemDate = new Date(itemDateStr);
+    }
+    
+    if (isNaN(itemDate.getTime())) return false;
+
+    if (selectedDate.isMonthOnly) {
+      return itemDate.getMonth() === selectedDate.month &&
+             itemDate.getFullYear() === selectedDate.year;
+    }
+    
+    return itemDate.getDate() === selectedDate.getDate() &&
+           itemDate.getMonth() === selectedDate.getMonth() &&
+           itemDate.getFullYear() === selectedDate.getFullYear();
+  };
+
+  const filteredQuotations = useMemo(() => {
+    return quotations.filter(q => {
+      const qId = (q.id || '').toLowerCase();
+      const name = (q.name || '').toLowerCase();
+      const query = searchQuery.toLowerCase();
+      
+      const matchesSearch = qId.includes(query) || name.includes(query);
+      if (!matchesSearch) return false;
+      
+      return matchDate(q.createAt || q.date);
+    });
+  }, [quotations, searchQuery, selectedDate]);
+
+  const renderStatus = (status) => {
+    const s = (status || '').toUpperCase();
+    const baseStyle = "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border whitespace-nowrap";
+    switch (s) {
+      case 'APPROVED':
+      case 'ĐỒNG Ý':
+      case 'ĐÃ DUYỆT':
+        return <span className={`${baseStyle} bg-emerald-50 text-emerald-600 border-emerald-200`}>ĐỒNG Ý</span>;
+      case 'CANCELLED':
+      case 'TỪ CHỐI':
+      case 'ĐÃ HỦY':
+        return <span className={`${baseStyle} bg-rose-50 text-rose-600 border-rose-200`}>TỪ CHỐI</span>;
+      default:
+        return <span className={`${baseStyle} bg-amber-50 text-amber-600 border-amber-200`}>CHỜ DUYỆT</span>;
+    }
+  };
+
+  return (
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 460 },
+          borderRadius: { xs: 0, sm: '24px 0 0 24px' },
+          boxShadow: '-10px 0 40px rgba(0,0,0,0.08)',
+          borderLeft: '1px solid #e2e8f0',
+          background: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%'
+        }
+      }}
+    >
+      {/* Header */}
+      <Box className="p-6 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div className="space-y-1">
+          <Typography className="text-base font-black text-slate-900 uppercase tracking-wide font-inter">
+            Chuyển đổi Báo giá
+          </Typography>
+          <Typography className="text-xs font-bold text-slate-400 font-inter">
+            Chọn một báo giá bên dưới để chuyển đổi sang đơn hàng
+          </Typography>
+        </div>
+        <IconButton onClick={onClose} className="hover:bg-slate-100 rounded-xl transition-all">
+          <CloseIcon className="text-slate-500" />
+        </IconButton>
+      </Box>
+
+      {/* Search Filter */}
+      <Box className="p-4 bg-white border-b border-slate-200 shrink-0 select-none">
+        <div className="flex gap-2 items-center">
+          <div className="relative group flex-1">
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm mã báo giá, khách hàng..." 
+              className="w-full bg-slate-50 border-2 border-slate-200 text-xs font-bold rounded-xl pl-10 pr-4 py-3 outline-none focus:bg-white focus:border-[#00288E] transition-all text-slate-700 placeholder:text-slate-400 font-inter"
+            />
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#00288E] transition-colors text-[20px]">search</span>
+          </div>
+
+          {/* Custom Date Picker Popover */}
+          <Box className="relative shrink-0 font-inter">
+            <button 
+              onClick={() => {
+                if (!calendarOpen) {
+                  setTempSelectedDate(selectedDate);
+                }
+                setCalendarOpen(!calendarOpen);
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-3 rounded-xl border transition-all text-[11px] font-black bg-white shadow-sm active:scale-95 whitespace-nowrap ${
+                selectedDate || calendarOpen ? 'border-[#00288E] text-[#00288E]' : 'border-slate-300 text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              <span className={`material-symbols-outlined text-base ${selectedDate || calendarOpen ? 'text-[#00288E]' : 'text-slate-400'}`}>
+                calendar_today
+              </span>
+              <span>
+                {selectedDate 
+                  ? (selectedDate.isMonthOnly 
+                      ? `Tháng ${(selectedDate.month + 1).toString().padStart(2, '0')}/${selectedDate.year}`
+                      : (selectedDate instanceof Date ? selectedDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Chọn ngày lọc'))
+                  : "Chọn ngày lọc"}
+              </span>
+              <span className={`material-symbols-outlined text-sm transition-transform duration-300 ${calendarOpen ? 'rotate-180 text-[#00288E]' : 'text-slate-400'}`}>
+                keyboard_arrow_down
+              </span>
+            </button>
+
+            {calendarOpen && (
+              <>
+                {/* Lớp phủ click ra ngoài để đóng lịch */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => {
+                    setTempSelectedDate(selectedDate);
+                    setCalendarOpen(false);
+                    setDrawerCalendarView('days');
+                  }}
+                />
+                
+                {/* Calendar Popover */}
+                <Box className="absolute right-0 mt-2 z-50 bg-white border border-slate-200 shadow-2xl rounded-3xl p-4 w-[285px] animate-fade-in origin-top-right">
+                  
+                  {/* Header: Chọn Tháng & Năm kết hợp và nút Hôm nay */}
+                  <Box className="flex justify-between items-center gap-2 mb-3">
+                    {drawerCalendarView === 'days' ? (
+                      <>
+                        <div className="flex-1 flex items-center gap-0.5 bg-white p-0.5 rounded-xl border border-slate-300 shadow-sm h-[32px]">
+                          <button 
+                            onClick={() => { 
+                              let newM = currentCalendarMonth - 1; 
+                              let newY = currentCalendarYear; 
+                              if (newM < 0) { 
+                                newM = 11; 
+                                newY--; 
+                              } 
+                              setCurrentCalendarMonth(newM); 
+                              setCurrentCalendarYear(newY); 
+                            }} 
+                            className="w-6 h-6 rounded-lg hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#00288E] transition-colors touch-manipulation" 
+                            aria-label="Tháng trước"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">chevron_left</span>
+                          </button>
+                          <button 
+                            onClick={() => { 
+                              setDrawerCalendarView('months'); 
+                            }} 
+                            className="flex-1 px-1 py-0.5 rounded-lg transition-all flex items-center justify-center gap-1 hover:bg-slate-50"
+                          >
+                            <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest whitespace-nowrap">
+                              THÁNG {currentCalendarMonth + 1}, {currentCalendarYear}
+                            </span>
+                            <span className="material-symbols-outlined text-[12px] text-slate-300 transition-transform">expand_more</span>
+                          </button>
+                          <button 
+                            onClick={() => { 
+                              let newM = currentCalendarMonth + 1; 
+                              let newY = currentCalendarYear; 
+                              if (newM > 11) { 
+                                newM = 0; 
+                                newY++; 
+                              } 
+                              setCurrentCalendarMonth(newM); 
+                              setCurrentCalendarYear(newY); 
+                            }} 
+                            className="w-6 h-6 rounded-lg hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-[#00288E] transition-colors touch-manipulation" 
+                            aria-label="Tháng sau"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            const today = new Date();
+                            setTempSelectedDate(today);
+                            setCurrentCalendarMonth(today.getMonth());
+                            setCurrentCalendarYear(today.getFullYear());
+                          }}
+                          className="shrink-0 text-[10px] font-black text-[#00288E] hover:bg-blue-50 border border-[#00288E]/20 px-2 py-1 rounded-xl uppercase tracking-wider transition-colors bg-white flex items-center gap-1 h-[32px] shadow-sm"
+                        >
+                          <span className="material-symbols-outlined text-[12px]">today</span>
+                          Hôm nay
+                        </button>
+                      </>
+                    ) : drawerCalendarView === 'months' ? (
+                      <div className="flex-1 flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => { setDrawerCalendarView('days'); }} 
+                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-[#00288E] transition-colors"
+                            aria-label="Quay lại chọn ngày"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                          </button>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span>
+                        </div>
+                        <button 
+                          onClick={() => { 
+                            setDrawerCalendarView('years'); 
+                            setDrawerYearRangeStart(Math.floor(currentCalendarYear / 12) * 12); 
+                          }} 
+                          className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 text-[10px] font-black text-[#00288E] uppercase transition-colors"
+                        >
+                          {currentCalendarYear} <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => { setDrawerCalendarView('months'); }} 
+                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                          </button>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span>
+                        </div>
+                        <div className="flex items-center gap-0.5 bg-slate-50 p-0.5 rounded-lg border border-slate-200">
+                          <button 
+                            onClick={() => { setDrawerYearRangeStart(prev => prev - 12); }} 
+                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">chevron_left</span>
+                          </button>
+                          <span className="text-[8px] font-black text-slate-500 px-1">{drawerYearRangeStart} - {drawerYearRangeStart + 11}</span>
+                          <button 
+                            onClick={() => { setDrawerYearRangeStart(prev => prev + 12); }} 
+                            className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </Box>
+
+                  {/* View 1: Grid các Ngày */}
+                  {drawerCalendarView === 'days' && (
+                    <>
+                      {/* Thứ trong tuần */}
+                      <div className="grid grid-cols-7 gap-1 text-center mb-1 animate-fade-in">
+                        {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day, idx) => (
+                          <span key={idx} className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{day}</span>
+                        ))}
+                      </div>
+
+                      {/* Grid các Ngày */}
+                      <div className="grid grid-cols-7 gap-1 animate-fade-in">
+                        {/* Thêm ô trống của tháng trước */}
+                        {Array.from({ length: getFirstDayOfMonth(currentCalendarMonth, currentCalendarYear) }).map((_, idx) => (
+                          <div key={`empty-${idx}`} className="w-8 h-8" />
+                        ))}
+
+                        {/* Render các ngày thực tế */}
+                        {Array.from({ length: getDaysInMonth(currentCalendarMonth, currentCalendarYear) }).map((_, idx) => {
+                          const dayNum = idx + 1;
+                          const dateObj = new Date(currentCalendarYear, currentCalendarMonth, dayNum);
+                          const isSelected = tempSelectedDate && 
+                                             (tempSelectedDate instanceof Date) &&
+                                             tempSelectedDate.getDate() === dayNum && 
+                                             tempSelectedDate.getMonth() === currentCalendarMonth && 
+                                             tempSelectedDate.getFullYear() === currentCalendarYear;
+                          const isToday = new Date().toDateString() === dateObj.toDateString();
+
+                          return (
+                            <button
+                              key={dayNum}
+                              onClick={() => {
+                                setTempSelectedDate(dateObj);
+                              }}
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                                isSelected 
+                                  ? 'bg-[#00288E] text-white shadow-md shadow-blue-900/20 animate-scale-up' 
+                                  : isToday
+                                    ? 'bg-blue-50 border border-[#00288E]/30 text-[#00288E] hover:bg-blue-100'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {dayNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* View 2: Grid Chọn Tháng */}
+                  {drawerCalendarView === 'months' && (
+                    <div className="grid grid-cols-3 gap-2 py-2 animate-fade-in">
+                      {monthNames.map((mName, idx) => {
+                        const isMonthSelected = idx === currentCalendarMonth;
+                        return (
+                          <button 
+                            key={mName} 
+                            onClick={() => { 
+                              setCurrentCalendarMonth(idx); 
+                              setDrawerCalendarView('days'); 
+                              setTempSelectedDate({ isMonthOnly: true, month: idx, year: currentCalendarYear });
+                            }} 
+                            className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${
+                              isMonthSelected 
+                                ? 'bg-[#00288E] text-white shadow-lg shadow-blue-500/30' 
+                                : 'text-slate-500 hover:bg-slate-50'
+                            }`}
+                          >
+                            {mName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* View 3: Grid Chọn Năm */}
+                  {drawerCalendarView === 'years' && (
+                    <div className="grid grid-cols-3 gap-2 py-2 animate-fade-in">
+                      {Array.from({ length: 12 }).map((_, i) => { 
+                        const yearOpt = drawerYearRangeStart + i; 
+                        const isYearSelected = yearOpt === currentCalendarYear;
+                        return (
+                          <button 
+                            key={yearOpt} 
+                            onClick={() => { 
+                              setCurrentCalendarYear(yearOpt); 
+                              setDrawerCalendarView('months'); 
+                              setTempSelectedDate({ isMonthOnly: true, month: currentCalendarMonth, year: yearOpt });
+                            }} 
+                            className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${
+                              isYearSelected 
+                                ? 'bg-[#00288E] text-white shadow-lg' 
+                                : 'text-slate-500 hover:bg-slate-50'
+                            }`}
+                          >
+                            {yearOpt}
+                          </button>
+                        ); 
+                      })}
+                    </div>
+                  )}
+
+                  {/* Footer của Lịch: Xóa bộ lọc */}
+                  {drawerCalendarView === 'days' && (tempSelectedDate || selectedDate) && (
+                    <Box className="flex justify-end items-center mt-4 pt-3 border-t border-slate-100 animate-fade-in">
+                      <button
+                        onClick={() => {
+                          setTempSelectedDate(null);
+                          setSelectedDate(null);
+                          setCalendarOpen(false);
+                          setDrawerCalendarView('days');
+                        }}
+                        className="text-[10px] font-black text-rose-600 hover:bg-rose-50 px-2.5 py-1.5 rounded-lg uppercase tracking-wider transition-colors w-full text-center"
+                      >
+                        Xóa bộ lọc
+                      </button>
+                    </Box>
+                  )}
+
+                  {/* Hủy & Xác nhận button */}
+                  <Box className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <button
+                      onClick={() => {
+                        setTempSelectedDate(selectedDate);
+                        setCalendarOpen(false);
+                        setDrawerCalendarView('days');
+                      }}
+                      className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedDate(tempSelectedDate);
+                        setCalendarOpen(false);
+                        setDrawerCalendarView('days');
+                      }}
+                      className="flex-1 py-2 bg-[#00288E] hover:bg-[#00288E]/90 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-blue-900/10"
+                    >
+                      Xác nhận
+                    </button>
+                  </Box>
+                </Box>
+              </>
+            )}
+          </Box>
+        </div>
+      </Box>
+
+      {/* Main List Area */}
+      <Box className="flex-1 overflow-y-auto p-4 space-y-3">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-[#00288E] rounded-full animate-spin"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-inter">Đang nạp báo giá...</p>
+          </div>
+        ) : filteredQuotations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center gap-4 bg-white rounded-2xl border border-slate-300 p-6">
+            <span className="material-symbols-outlined text-slate-300 text-[48px]">receipt_long</span>
+            <div className="space-y-1">
+              <p className="text-sm font-black text-slate-800 font-inter">Không tìm thấy báo giá nào</p>
+              <p className="text-xs font-medium text-slate-400 max-w-[280px] font-inter">Không có báo giá nào khả dụng hoặc không khớp với từ khóa tìm kiếm của bạn.</p>
+            </div>
+          </div>
+        ) : (
+          filteredQuotations.map((q) => (
+            <div 
+              key={q.quotationID}
+              onClick={() => onSelect(q)}
+              className="bg-white rounded-2xl border border-slate-300 hover:border-[#00288E] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-4 flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm uppercase shrink-0 border border-slate-100">
+                  {q.avatar}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-slate-900 tracking-tight font-inter">{q.id}</span>
+                    <span className="text-[10px] font-bold text-slate-400 font-inter">{q.date}</span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-600 truncate mt-0.5 font-inter">{q.name}</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col items-end gap-2 ml-4 shrink-0">
+                {formatCurrency(q.value, true)}
+                <div className="flex items-center gap-2">
+                  {renderStatus(q.status)}
+                  <div className="w-6 h-6 rounded-full bg-blue-50 group-hover:bg-[#00288E] flex items-center justify-center transition-all duration-300">
+                    <span className="material-symbols-outlined text-[14px] text-blue-600 group-hover:text-white transition-colors">shopping_cart_checkout</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </Box>
+    </Drawer>
   );
 };
 

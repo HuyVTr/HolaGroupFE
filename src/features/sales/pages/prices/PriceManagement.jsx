@@ -78,6 +78,12 @@ const getResponsiveValueClass = (val, rawVal) => {
   }
 };
 
+const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
+const getFirstDayOfMonth = (year, month) => {
+  let day = new Date(year, month - 1, 1).getDay();
+  return day === 0 ? 6 : day - 1;
+};
+
 const PriceManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -108,7 +114,7 @@ const PriceManagement = () => {
   const [showYearsCountPicker, setShowYearsCountPicker] = useState(false);
   const [yearRangeStart, setYearRangeStart] = useState(Math.floor(now.getFullYear() / 10) * 10 - 4);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerView, setDatePickerView] = useState('months');
+  const [datePickerView, setDatePickerView] = useState('days');
   const [dateTempYear, setDateTempYear] = useState(now.getFullYear());
   const [dateYearRangeStart, setDateYearRangeStart] = useState(Math.floor(now.getFullYear() / 12) * 12);
 
@@ -123,6 +129,7 @@ const PriceManagement = () => {
   ];
 
   const [activeTab, setActiveTab] = useState('ALL');
+  const [isOpenStatusDropdown, setIsOpenStatusDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuotation, setSelectedQuotation] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -139,7 +146,7 @@ const PriceManagement = () => {
       if (yearsCountPickerRef.current && !yearsCountPickerRef.current.contains(event.target)) setShowYearsCountPicker(false);
       if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
         setShowDatePicker(false);
-        setDatePickerView('months');
+        setDatePickerView('days');
       }
       if (!event.target.closest('.stat-card-container')) {
         setActiveTooltipIdx(null);
@@ -194,12 +201,18 @@ const PriceManagement = () => {
   }, []);
 
   const mapStatus = (status) => {
-    switch (status) {
-      case 'APPROVED': return { label: 'Đã duyệt', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
-      case 'SENT': return { label: 'Đã gửi', color: 'bg-blue-50 text-blue-600 border-blue-100' };
-      case 'DRAFT': return { label: 'Bản nháp', color: 'bg-slate-50 text-slate-500 border-slate-100' };
-      case 'CANCELLED': return { label: 'Đã hủy', color: 'bg-red-50 text-red-600 border-red-100' };
-      default: return { label: status, color: 'bg-slate-50 text-slate-500 border-slate-100' };
+    const s = (status || '').toUpperCase();
+    switch (s) {
+      case 'APPROVED':
+      case 'ĐỒNG Ý':
+      case 'ĐÃ DUYỆT':
+        return { label: 'Đồng ý', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 border' };
+      case 'CANCELLED':
+      case 'TỪ CHỐI':
+      case 'ĐÃ HỦY':
+        return { label: 'Từ chối', color: 'bg-red-50 text-red-600 border-red-100 border' };
+      default:
+        return { label: 'Chờ duyệt', color: 'bg-amber-50 text-amber-600 border-amber-100 border' };
     }
   };
 
@@ -377,7 +390,17 @@ const PriceManagement = () => {
     const result = filteredByTimeQuotations.filter(qt => {
       const matchesSearch = qt.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             qt.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTab = activeTab === 'ALL' || qt.status === activeTab;
+      
+      const s = (qt.status || '').toUpperCase();
+      let matchesTab = activeTab === 'ALL';
+      if (activeTab === 'PENDING') {
+        matchesTab = s === 'PENDING' || s === 'SENT' || s === 'DRAFT' || s === 'CHỜ DUYỆT' || s === 'ĐÃ GỬI' || s === 'BẢN NHÁP' || s === '';
+      } else if (activeTab === 'APPROVED') {
+        matchesTab = s === 'APPROVED' || s === 'ĐỒNG Ý' || s === 'ĐÃ DUYỆT';
+      } else if (activeTab === 'CANCELLED') {
+        matchesTab = s === 'CANCELLED' || s === 'TỪ CHỐI' || s === 'ĐÃ HỦY';
+      }
+      
       return matchesSearch && matchesTab;
     });
 
@@ -428,14 +451,12 @@ const PriceManagement = () => {
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
       
       {/* 1. Header Section */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4 px-2 md:px-0 shrink-0">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
         <div className="space-y-1 sm:space-y-2">
-          <h1 className="font-black text-slate-900 uppercase tracking-tight leading-tight"
-              style={{ fontSize: 'clamp(20px, 1.8vw, 32px)' }}>Quản lý báo giá</h1>
-          <p className="text-slate-500 flex items-center gap-2 font-medium"
-             style={{ fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
-            Hệ thống đang kiểm soát 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in" key={getTimeframeText()}>
+          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý báo giá</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Hệ thống đang kiểm soát{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={getTimeframeText()}>
               {getTimeframeText()} ({filteredQuotations.length} bản ghi)
             </span>
           </p>
@@ -481,49 +502,140 @@ const PriceManagement = () => {
                        gap: 'clamp(2px, 0.25vw, 4px)'
                      }}
                      ref={datePickerRef}>
-                  <button onClick={() => { let newM = m - 1; let newY = y; if (newM < 1) { newM = 12; newY--; } setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`); }} 
+                  <button onClick={() => {
+                            const newDate = new Date(y, m - 1, selectedDay - 1);
+                            setSelectedDay(newDate.getDate());
+                            setFilterDate(`${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`);
+                          }} 
                           className="hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 touch-manipulation"
                           style={{
                             width: 'clamp(20px, 2vw, 28px)',
                             height: 'clamp(20px, 2vw, 28px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)'
                           }}
-                          aria-label="Tháng trước">
+                          aria-label="Ngày trước">
                     <span className="material-symbols-outlined" style={{ fontSize: 'clamp(10px, 1.1vw, 16px)' }} aria-hidden="true">chevron_left</span>
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); setDateTempYear(y); setShowDatePicker(!showDatePicker); setDatePickerView('months'); }} 
+                  <button onClick={(e) => { e.stopPropagation(); setDateTempYear(y); setShowDatePicker(!showDatePicker); setDatePickerView('days'); }} 
                           className={`transition-all flex items-center hover:bg-slate-50 ${showDatePicker ? 'bg-slate-50 shadow-inner' : ''}`}
                           style={{
                             padding: 'clamp(3px, 0.35vw, 6px) clamp(6px, 0.75vw, 12px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)',
                             gap: 'clamp(4px, 0.4vw, 8px)'
                           }}>
-                    <span className="font-black text-slate-900 uppercase tracking-widest" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Tháng {m}, {y}</span>
+                    <span className="font-black text-slate-900 uppercase tracking-widest" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Ngày {selectedDay}/{m}/{y}</span>
                     <span className={`material-symbols-outlined text-slate-300 transition-transform ${showDatePicker ? 'rotate-180 text-blue-600' : ''}`} style={{ fontSize: 'clamp(9px, 0.9vw, 14px)' }}>expand_more</span>
                   </button>
                   {showDatePicker && (
                     <div className="absolute top-full mt-2 right-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-5 min-w-[320px] animate-fade-in origin-top-right">
-                      {datePickerView === 'months' ? (
+                      {datePickerView === 'days' ? (
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-50 pb-3"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span><button onClick={(e) => { e.stopPropagation(); setDatePickerView('years'); setDateYearRangeStart(Math.floor(dateTempYear / 12) * 12); }} className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">{dateTempYear} <span className="material-symbols-outlined text-[14px]">arrow_forward</span></button></div>
-                          <div className="grid grid-cols-3 gap-2">{monthNames.map((mName, idx) => (<button key={mName} onClick={() => { setFilterDate(`${dateTempYear}-${String(idx + 1).padStart(2, '0')}`); setShowDatePicker(false); }} className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>{mName}</button>))}</div>
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn ngày</span>
+                            <button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} 
+                                    className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">
+                              Tháng {m}, {y} <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(d => <div key={d} className="py-1">{d}</div>)}
+                          </div>
+                          <div className="grid grid-cols-7 gap-1">
+                            {Array.from({ length: getFirstDayOfMonth(y, m) }).map((_, idx) => (
+                              <div key={`empty-${idx}`} className="h-8" />
+                            ))}
+                            {Array.from({ length: getDaysInMonth(y, m) }).map((_, idx) => {
+                              const dayNum = idx + 1;
+                              const isSelected = dayNum === selectedDay;
+                              return (
+                                <button key={dayNum} 
+                                        onClick={() => { setSelectedDay(dayNum); setShowDatePicker(false); }} 
+                                        className={`h-8 w-8 text-[10px] font-black rounded-xl transition-all flex items-center justify-center ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                  {dayNum}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : datePickerView === 'months' ? (
+                        <div className="space-y-4 animate-fade-in">
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span>
+                            <button onClick={(e) => { e.stopPropagation(); setDatePickerView('years'); setDateYearRangeStart(Math.floor(dateTempYear / 12) * 12); }} 
+                                    className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[12px] font-black text-blue-600 uppercase">
+                              {dateTempYear} <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {monthNames.map((mName, idx) => (
+                              <button key={mName} 
+                                      onClick={() => { 
+                                        const newM = idx + 1;
+                                        const maxD = getDaysInMonth(dateTempYear, newM);
+                                        if (selectedDay > maxD) setSelectedDay(maxD);
+                                        setFilterDate(`${dateTempYear}-${String(newM).padStart(2, '0')}`); 
+                                        setDatePickerView('days'); 
+                                      }} 
+                                      className={`text-[10px] font-black py-2.5 rounded-xl transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                {mName}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-4 animate-fade-in">
-                          <div className="flex items-center justify-between border-b border-slate-50 pb-3"><div className="flex items-center gap-2"><button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600"><span className="material-symbols-outlined text-[18px]">arrow_back</span></button><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span></div><div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg"><button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev - 12); }} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[16px]">chevron_left</span></button><span className="text-[9px] font-black text-slate-500 px-1">{dateYearRangeStart} - {dateYearRangeStart + 11}</span><button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev + 12); }} className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[16px]">chevron_right</span></button></div></div>
-                          <div className="grid grid-cols-3 gap-2">{Array.from({length: 12}).map((_, i) => { const yearOpt = dateYearRangeStart + i; return (<button key={yearOpt} onClick={(e) => { e.stopPropagation(); setDateTempYear(yearOpt); setDatePickerView('months'); }} className={`text-[11px] font-black py-3 rounded-xl transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>{yearOpt}</button>); })}</div>
+                          <div className="flex items-center justify-between border-b border-slate-50 pb-3">
+                            <div className="flex items-center gap-2">
+                              <button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} 
+                                      className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600">
+                                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                              </button>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span>
+                            </div>
+                            <div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg">
+                              <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev - 12); }} 
+                                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                              </button>
+                              <span className="text-[9px] font-black text-slate-500 px-1">{dateYearRangeStart} - {dateYearRangeStart + 11}</span>
+                              <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev + 12); }} 
+                                      className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {Array.from({length: 12}).map((_, i) => { 
+                              const yearOpt = dateYearRangeStart + i; 
+                              return (
+                                <button key={yearOpt} 
+                                        onClick={(e) => { 
+                                          e.stopPropagation(); 
+                                          setDateTempYear(yearOpt); 
+                                          setDatePickerView('months'); 
+                                        }} 
+                                        className={`text-[11px] font-black py-3 rounded-xl transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                  {yearOpt}
+                                </button>
+                              ); 
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
                   )}
-                  <button onClick={() => { let newM = m + 1; let newY = y; if (newM > 12) { newM = 1; newY++; } setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`); }} 
+                  <button onClick={() => {
+                            const newDate = new Date(y, m - 1, selectedDay + 1);
+                            setSelectedDay(newDate.getDate());
+                            setFilterDate(`${newDate.getFullYear()}-${String(newDate.getMonth() + 1).padStart(2, '0')}`);
+                          }} 
                           className="hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 touch-manipulation"
                           style={{
                             width: 'clamp(20px, 2vw, 28px)',
                             height: 'clamp(20px, 2vw, 28px)',
                             borderRadius: 'clamp(4px, 0.4vw, 8px)'
                           }}
-                          aria-label="Tháng tiếp theo">
+                          aria-label="Ngày tiếp theo">
                     <span className="material-symbols-outlined" style={{ fontSize: 'clamp(10px, 1.1vw, 16px)' }} aria-hidden="true">chevron_right</span>
                   </button>
                 </div>
@@ -720,32 +832,78 @@ const PriceManagement = () => {
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#00288E] transition-colors font-bold">search</span>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-300/50 shadow-inner w-full lg:w-auto overflow-x-auto no-scrollbar order-1 lg:order-2">
-              {['ALL', 'APPROVED', 'SENT', 'DRAFT', 'CANCELLED'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
-                    activeTab === tab 
-                      ? 'bg-white text-blue-600 border-slate-200 shadow-sm' 
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-900'
-                  }`}
-                >
-                  {tab === 'ALL' ? 'Tất cả' : mapStatus(tab).label}
-                </button>
-              ))}
+            {/* Bộ lọc trạng thái kiểu Dropdown cao cấp */}
+            <div className="relative w-full lg:w-72 order-1 lg:order-2 font-inter">
+              <button
+                type="button"
+                onClick={() => setIsOpenStatusDropdown(!isOpenStatusDropdown)}
+                className="w-full bg-slate-50 border-2 border-slate-200 hover:border-[#00288E] transition-all rounded-xl px-4 py-4 flex items-center justify-between shadow-sm active:scale-95 cursor-pointer text-slate-700 focus:bg-white focus:border-[#00288E]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400 font-bold" style={{ fontSize: '18px' }}>filter_alt</span>
+                  <span className="text-xs font-black uppercase tracking-wider truncate">
+                    {activeTab === 'ALL' ? 'Tất cả trạng thái' : mapStatus(activeTab).label}
+                  </span>
+                </div>
+                <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isOpenStatusDropdown ? 'rotate-180' : ''}`} style={{ fontSize: '18px' }}>
+                  keyboard_arrow_down
+                </span>
+              </button>
+
+              {isOpenStatusDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-20" 
+                    onClick={() => setIsOpenStatusDropdown(false)}
+                  />
+                  
+                  <div className="absolute right-0 top-full mt-2 w-full bg-white border-2 border-slate-200 rounded-3xl shadow-2xl z-30 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#00288E] opacity-80">CHỌN TRẠNG THÁI</span>
+                    </div>
+
+                    <div className="p-4 space-y-2">
+                      {['ALL', 'PENDING', 'APPROVED', 'CANCELLED'].map((tab) => {
+                        const isSelected = activeTab === tab;
+                        const labelText = tab === 'ALL' ? 'Tất cả trạng thái' : mapStatus(tab).label;
+                        return (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab);
+                              setIsOpenStatusDropdown(false);
+                            }}
+                            className={`w-full px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-left transition-all flex items-center justify-between active:scale-95 cursor-pointer ${
+                              isSelected
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 font-black'
+                                : 'bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600'
+                            }`}
+                          >
+                            <span>{labelText}</span>
+                            {isSelected && (
+                              <span className="material-symbols-outlined text-base">check_circle</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
       </div>
 
       {/* Table Area */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 overflow-hidden mx-2 md:mx-0 flex-1 min-h-0">
-            <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
-              <table className="w-full text-left whitespace-nowrap">
+            {/* Desktop View (Table) */}
+            <div className="hidden lg:block overflow-x-auto overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ scrollbarGutter: 'stable' }}>
+              <table className="w-full table-fixed text-left border-collapse xl:min-w-[1000px] min-w-0">
                 <thead className="bg-slate-50 sticky top-0 z-10">
                   <tr className="bg-slate-50">
                     <th 
                       onClick={() => handleSort('id')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -757,7 +915,7 @@ const PriceManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('name')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[28%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -769,10 +927,10 @@ const PriceManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('date')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group"
-                      style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
+                      style={{ fontSize: 'clamp(8px, 0.8vw, 11px)', textAlign: 'center' }}
                     >
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-center gap-1">
                         <span>Ngày lập</span>
                         <span className={`material-symbols-outlined text-[13px] transition-opacity ${sortConfig.key === 'date' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
                           {sortConfig.key === 'date' && sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
@@ -781,18 +939,18 @@ const PriceManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('value')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] cursor-pointer hover:text-[#00288E] transition-colors group w-[17%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-start gap-1">
                         <span>Giá trị dự kiến</span>
                         <span className={`material-symbols-outlined text-[13px] transition-opacity ${sortConfig.key === 'value' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
                           {sortConfig.key === 'value' && sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
                         </span>
                       </div>
                     </th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-center" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-right" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
+                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-center w-[12%]" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
+                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-[0.2em] text-center w-[8%]" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -814,8 +972,8 @@ const PriceManagement = () => {
                         className="group hover:bg-slate-50/50 transition-all cursor-pointer"
                       >
                         <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                          <span className="font-black text-blue-600 tracking-tight group-hover:underline underline-offset-4"
-                                style={{ fontSize: 'clamp(10px, 0.95vw, 13px)' }}>#{qt.id || qt.quotationID}</span>
+                          <span className="font-black text-[#00288E] tracking-tight group-hover:underline underline-offset-4"
+                                style={{ fontSize: 'clamp(10px, 0.95vw, 13px)' }}>{qt.id || qt.quotationID}</span>
                         </td>
                         <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                           <div className="flex items-center gap-4">
@@ -831,11 +989,11 @@ const PriceManagement = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', textAlign: 'center' }}>
                           <span className="font-bold text-slate-600 uppercase tracking-tighter"
                                 style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{qt.date}</span>
                         </td>
-                        <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)', textAlign: 'left' }}>
                           {formatCurrency(qt.value, true)}
                         </td>
                         <td className="px-4 sm:px-6 py-4 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
@@ -844,8 +1002,8 @@ const PriceManagement = () => {
                             {statusInfo.label}
                           </span>
                         </td>
-                        <td className="px-4 sm:px-6 py-4 text-right" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                          <button className="rounded-xl bg-slate-50 text-slate-300 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center active:scale-95 ml-auto"
+                        <td className="px-4 sm:px-6 py-4 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <button className="rounded-xl bg-slate-50 text-slate-300 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center active:scale-95 mx-auto"
                                   style={{ width: 'clamp(28px, 2.5vw, 40px)', height: 'clamp(28px, 2.5vw, 40px)' }}>
                             <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.3vw, 20px)' }}>visibility</span>
                           </button>
@@ -855,6 +1013,100 @@ const PriceManagement = () => {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile/Tablet View (Cards) */}
+            <div className="block lg:hidden overflow-auto flex-1 p-4 bg-slate-50/50 scrollbar-thin scrollbar-thumb-slate-200">
+              
+              {/* Thanh sắp xếp thông minh khi ở chế độ card */}
+              <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sắp xếp theo</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { key: 'id', label: 'Mã báo giá' },
+                    { key: 'name', label: 'Khách hàng' },
+                    { key: 'value', label: 'Giá trị' },
+                    { key: 'date', label: 'Ngày tạo' }
+                  ].map(item => {
+                    const isSelected = sortConfig.key === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleSort(item.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 ${
+                          isSelected 
+                            ? 'bg-[#00288E] text-white shadow-md shadow-blue-900/10' 
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {item.label}
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-[11px] font-bold">
+                            {sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {paginatedQuotations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <span className="material-symbols-outlined text-4xl text-slate-200">payments</span>
+                  <p className="text-xs font-bold text-slate-300 uppercase tracking-widest italic">Không tìm thấy báo giá nào</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {paginatedQuotations.map((qt, index) => {
+                    const statusInfo = mapStatus(qt.status);
+                    return (
+                      <div 
+                        key={index}
+                        onClick={() => handleRowClick(qt)}
+                        className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#00288E] hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-98 flex flex-col justify-between h-full group"
+                      >
+                        <div className="flex items-start gap-4 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase tracking-tighter text-xs shadow-sm shrink-0 border border-slate-100 group-hover:scale-105 transition-transform overflow-hidden">
+                            {qt.avatar}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-black text-slate-900 uppercase tracking-tight text-xs sm:text-sm line-clamp-2 leading-tight group-hover:text-[#00288E] transition-colors">
+                              {qt.name}
+                            </div>
+                            <div className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mt-1">
+                              Mã: {qt.id || qt.quotationID}
+                            </div>
+                            {qt.email && (
+                              <div className="font-bold text-slate-400 text-[9px] mt-0.5 max-w-[25ch] truncate">
+                                {qt.email}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-100 pt-4 mt-auto flex flex-col gap-3">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Ngày lập</span>
+                            <span className="font-bold text-slate-600">{qt.date}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Giá trị dự kiến</span>
+                            <span className="font-black text-slate-900">{formatCurrency(qt.value, true)}</span>
+                          </div>
+                          <div className="flex justify-between items-center border-t border-slate-100/60 pt-3">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Trạng thái</span>
+                            <span className={`inline-block rounded-xl font-black uppercase tracking-widest border ${statusInfo.color}`}
+                                  style={{ fontSize: '8px', padding: '3px 8px' }}>
+                              {statusInfo.label}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             
             {/* Pagination / Footer */}

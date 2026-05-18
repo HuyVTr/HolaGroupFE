@@ -133,6 +133,7 @@ const CustomerList = () => {
             ...c,
             id: (c.firstName?.substring(0, 1) || '') + (c.lastName?.substring(0, 1) || 'KH'),
             name: c.companyName || `${c.lastName || ''} ${c.firstName || ''}`,
+            customerType: c.companyName ? 'Doanh nghiệp' : 'Cá nhân',
             phone: c.phoneNumber || 'N/A',
             email: c.email || 'N/A',
             group: revenue > 50000000 ? 'VIP' : (revenue > 10000000 ? 'GOLD' : 'TIÊU CHUẨN'),
@@ -156,7 +157,8 @@ const CustomerList = () => {
     const result = customers.filter(c => {
       const matchSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           c.phone.includes(searchTerm) || 
-                          c.email.toLowerCase().includes(searchTerm.toLowerCase());
+                          c.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (c.customerType && c.customerType.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchGroup = filterGroup === 'all' || c.group === filterGroup;
       return matchSearch && matchGroup;
     });
@@ -351,7 +353,10 @@ const CustomerList = () => {
   };
 
   const openEditModal = (customer) => {
-    setEditFormData({ ...customer });
+    setEditFormData({ 
+      ...customer,
+      customerType: customer.customerType || (customer.companyName ? 'Doanh nghiệp' : 'Cá nhân')
+    });
     setShowEditModal(true);
   };
 
@@ -415,7 +420,7 @@ const CustomerList = () => {
       // Chuẩn bị dữ liệu để đồng bộ hóa với Database Schema
       let firstName = editFormData.name;
       let lastName = '';
-      let companyName = editFormData.name;
+      let companyName = editFormData.customerType === 'Doanh nghiệp' ? editFormData.name : null;
       
       const parts = editFormData.name.trim().split(' ');
       if (parts.length > 1) {
@@ -436,7 +441,15 @@ const CustomerList = () => {
       await salesService.updateCustomer(editFormData.customerID, updateData);
 
       setCustomers(prev => prev.map(c => 
-        c.customerID === editFormData.customerID ? { ...editFormData, phone: phoneClean, email: emailClean || 'N/A' } : c
+        c.customerID === editFormData.customerID 
+          ? { 
+              ...editFormData, 
+              phone: phoneClean, 
+              email: emailClean || 'N/A',
+              companyName,
+              customerType: companyName ? 'Doanh nghiệp' : 'Cá nhân'
+            } 
+          : c
       ));
       
       setShowEditModal(false);
@@ -455,17 +468,14 @@ const CustomerList = () => {
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
       
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 px-2 md:px-0">
-        <div className="space-y-1">
-          <h1 className="font-black text-slate-900 uppercase tracking-tight leading-tight"
-              style={{ fontSize: 'clamp(20px, 1.8vw, 32px)' }}>Danh sách khách hàng</h1>
-          <p className="text-slate-500 flex items-center gap-2 font-medium"
-             style={{ fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
-            Quản lý và theo dõi thông tin 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Danh sách khách hàng</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Quản lý và theo dõi thông tin{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
               {customers.length} khách hàng
-            </span>
+            </span>{" "}
             đang tham gia hệ thống
           </p>
         </div>
@@ -570,13 +580,13 @@ const CustomerList = () => {
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 overflow-hidden mx-2 md:mx-0 flex-1 min-h-0">
         
         {/* Desktop View */}
-        <div className="hidden lg:block overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
-          <table className="w-full text-left border-collapse xl:min-w-[1000px] min-w-0">
+        <div className="hidden lg:block overflow-x-auto overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ scrollbarGutter: 'stable' }}>
+          <table className="w-full table-fixed text-left border-collapse xl:min-w-[1000px] min-w-0">
             <thead className="bg-slate-50 sticky top-0 z-10">
               <tr>
                 <th 
                   onClick={() => handleSort('customerID')} 
-                  className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                  className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group w-[22%]"
                   style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                 >
                   <div className="flex items-center gap-1">
@@ -586,28 +596,29 @@ const CustomerList = () => {
                     </span>
                   </div>
                 </th>
-                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thông tin liên hệ</th>
-                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Hạng</th>
+                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center w-[12%]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Phân loại</th>
+                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 w-[18%]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thông tin liên hệ</th>
+                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center w-[14%]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Hạng</th>
                 <th 
                   onClick={() => handleSort('revenue')} 
-                  className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-left cursor-pointer hover:text-[#00288E] transition-colors group"
+                  className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center cursor-pointer hover:text-[#00288E] transition-colors group w-[14%]"
                   style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                 >
-                  <div className="flex items-center gap-1 justify-start">
+                  <div className="flex items-center gap-1 justify-center">
                     <span>Chi tiêu</span>
                     <span className={`material-symbols-outlined text-[13px] transition-opacity ${sortConfig.key === 'revenue' ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
                       {sortConfig.key === 'revenue' && sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
                     </span>
                   </div>
                 </th>
-                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
-                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center w-[120px]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
+                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center w-[12%]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
+                <th className="py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-center w-[8%]" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="p-20 text-center">
+                  <td colSpan="7" className="p-20 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-12 h-12 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Đang tải dữ liệu…</p>
@@ -638,6 +649,18 @@ const CustomerList = () => {
                         </div>
                       </div>
                     </td>
+                    <td className="p-4 sm:p-6 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-black text-[9px] uppercase tracking-wider shadow-sm border ${
+                        customer.customerType === 'Doanh nghiệp' 
+                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
+                          : 'bg-purple-50 text-purple-700 border-purple-200'
+                      }`}>
+                        <span className="material-symbols-outlined text-[12px] font-black">
+                          {customer.customerType === 'Doanh nghiệp' ? 'corporate_fare' : 'person'}
+                        </span>
+                        {customer.customerType}
+                      </span>
+                    </td>
                     <td className="px-4 sm:px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 font-bold text-slate-600"
@@ -653,15 +676,24 @@ const CustomerList = () => {
                       </div>
                     </td>
                     <td className="p-4 sm:p-6 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                      <span className={`rounded-full font-black uppercase tracking-wider inline-block ${
-                        customer.group === 'VIP' ? 'bg-orange-100 text-orange-700' : 
-                        customer.group === 'GOLD' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-600'
-                      }`}
-                      style={{ fontSize: 'clamp(8px, 0.7vw, 9px)', padding: 'clamp(2px, 0.4vw, 4px) clamp(6px, 0.8vw, 12px)' }}>
-                        {customer.group}
-                      </span>
+                      {customer.group === 'VIP' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-black text-[9px] uppercase tracking-wider shadow-sm">
+                          <span className="material-symbols-outlined text-[12px] font-black">diamond</span>
+                          VIP
+                        </span>
+                      ) : customer.group === 'GOLD' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200 font-black text-[9px] uppercase tracking-wider shadow-sm">
+                          <span className="material-symbols-outlined text-[12px] font-black">workspace_premium</span>
+                          GOLD
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200 font-black text-[9px] uppercase tracking-wider shadow-sm">
+                          <span className="material-symbols-outlined text-[12px] font-black">military_tech</span>
+                          TIÊU CHUẨN
+                        </span>
+                      )}
                     </td>
-                    <td className="p-4 sm:p-6 text-left tabular-nums" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                    <td className="p-4 sm:p-6 text-center tabular-nums" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
                       {formatCurrency(customer.revenue, true)}
                     </td>
                     <td className="p-4 sm:p-6" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
@@ -700,7 +732,7 @@ const CustomerList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="p-20 text-center text-slate-400">
+                  <td colSpan="7" className="p-20 text-center text-slate-400">
                     <p className="font-bold text-sm uppercase tracking-widest opacity-50">Không tìm thấy khách hàng nào phù hợp</p>
                   </td>
                 </tr>
@@ -719,92 +751,144 @@ const CustomerList = () => {
               </div>
             </div>
           ) : paginatedCustomers.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {paginatedCustomers.map((customer) => (
-                <div 
-                  key={customer.customerID}
-                  className="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-500 shadow-sm transition-all flex flex-col gap-2"
-                >
-                  {/* Top Row: Avatar + Name + Group + ID */}
-                  <div className="flex items-center justify-between gap-2.5">
-                    <div 
-                      className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
-                      onClick={() => openDrawer(customer.customerID)}
-                    >
-                      <div className={`rounded-lg flex items-center justify-center font-black shadow-sm shrink-0 w-9 h-9 text-[10px] ${customer.avatarBg}`}>
-                        {customer.id}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-black text-slate-900 leading-tight hover:text-blue-600 transition-colors text-xs truncate">
-                          {customer.name}
-                        </p>
-                        <p className="font-bold text-slate-400 uppercase tracking-wider text-[8px] mt-0.5">
-                          ID: KH-{customer.customerID.toString().slice(-4)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className={`rounded-lg font-black uppercase tracking-wider text-[8px] px-2 py-0.5 shrink-0 ${
-                      customer.group === 'VIP' ? 'bg-orange-100 text-orange-700' : 
-                      customer.group === 'GOLD' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      {customer.group}
-                    </span>
-                  </div>
-
-                  {/* Middle Row: Phone & Email & Revenue */}
-                  <div className="grid grid-cols-2 gap-2 text-[10px] border-t border-b border-slate-100 py-2">
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center gap-1 font-bold text-slate-500 truncate">
-                        <span className="material-symbols-outlined text-slate-300 text-xs shrink-0" style={{ fontSize: '12px' }}>phone</span>
-                        <span className="truncate">{customer.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-1 font-bold text-slate-400 truncate">
-                        <span className="material-symbols-outlined text-slate-300 text-xs shrink-0" style={{ fontSize: '12px' }}>mail</span>
-                        <span className="truncate">{customer.email}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col justify-center items-end bg-slate-50/70 px-2.5 py-1.5 rounded-lg border border-slate-100/50">
-                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px] leading-none mb-1">Chi tiêu</span>
-                      <span className="font-black text-slate-950 text-[11px] leading-none">
-                        {formatCurrency(customer.revenue, true)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bottom Row: Trading Status & Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 rounded-md border border-slate-200/50 bg-slate-50/10 px-1.5 py-0.5">
-                      <div className={`rounded-full shrink-0 w-1 h-1 ${customer.isTrading ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'}`}></div>
-                      <span className={`font-black uppercase tracking-wider text-[7.5px] ${customer.isTrading ? 'text-blue-600' : 'text-slate-400'}`}>
-                        {customer.isTrading ? 'Đang giao dịch' : 'Ngừng giao dịch'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-0.5">
-                      <ActionButton 
-                        icon="visibility" 
-                        color="text-blue-600 hover:bg-blue-50" 
-                        onClick={() => openDrawer(customer.customerID)} 
-                        title="Chi tiết"
-                      />
-                      <ActionButton 
-                        icon="edit" 
-                        color="text-slate-600 hover:bg-slate-100" 
-                        onClick={() => openEditModal(customer)} 
-                        title="Sửa"
-                      />
-                      <ActionButton 
-                        icon="delete" 
-                        color="text-red-600 hover:bg-red-50" 
-                        onClick={() => openDeleteModal(customer)} 
-                        title="Xóa"
-                      />
-                    </div>
-                  </div>
+            <>
+              {/* Thanh sắp xếp thông minh khi ở chế độ card */}
+              <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sắp xếp theo</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { key: 'customerID', label: 'ID' },
+                    { key: 'name', label: 'Tên' },
+                    { key: 'revenue', label: 'Doanh thu' }
+                  ].map(item => {
+                    const isSelected = sortConfig.key === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleSort(item.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 ${
+                          isSelected 
+                            ? 'bg-[#00288E] text-white shadow-md shadow-blue-900/10' 
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {item.label}
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-[11px] font-bold">
+                            {sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {paginatedCustomers.map((customer) => (
+                  <div 
+                    key={customer.customerID}
+                    className="bg-white rounded-xl p-3 border border-slate-200 hover:border-blue-500 shadow-sm transition-all flex flex-col gap-2"
+                  >
+                    {/* Top Row: Avatar + Name + Group + ID */}
+                    <div className="flex items-center justify-between gap-2.5">
+                      <div 
+                        className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
+                        onClick={() => openDrawer(customer.customerID)}
+                      >
+                        <div className={`rounded-lg flex items-center justify-center font-black shadow-sm shrink-0 w-9 h-9 text-[10px] ${customer.avatarBg}`}>
+                          {customer.id}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-slate-900 leading-tight hover:text-blue-600 transition-colors text-xs truncate">
+                            {customer.name}
+                          </p>
+                          <p className="font-bold text-slate-400 uppercase tracking-wider text-[8px] mt-0.5">
+                            ID: KH-{customer.customerID.toString().slice(-4)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {customer.group === 'VIP' ? (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-black text-[8px] uppercase tracking-wider shrink-0">
+                            <span className="material-symbols-outlined text-[10px] font-black">diamond</span>
+                            VIP
+                          </span>
+                        ) : customer.group === 'GOLD' ? (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-200 font-black text-[8px] uppercase tracking-wider shrink-0">
+                            <span className="material-symbols-outlined text-[10px] font-black">workspace_premium</span>
+                            GOLD
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-lg bg-slate-50 text-slate-600 border border-slate-200 font-black text-[8px] uppercase tracking-wider shrink-0">
+                            <span className="material-symbols-outlined text-[10px] font-black">military_tech</span>
+                            TIÊU CHUẨN
+                          </span>
+                        )}
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-lg font-black text-[7px] uppercase tracking-wider border shrink-0 ${
+                          customer.customerType === 'Doanh nghiệp' 
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200/50' 
+                            : 'bg-purple-50 text-purple-700 border-purple-200/50'
+                        }`}>
+                          {customer.customerType}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle Row: Phone & Email & Revenue */}
+                    <div className="grid grid-cols-2 gap-2 text-[10px] border-t border-b border-slate-100 py-2">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-1 font-bold text-slate-500 truncate">
+                          <span className="material-symbols-outlined text-slate-300 text-xs shrink-0" style={{ fontSize: '12px' }}>phone</span>
+                          <span className="truncate">{customer.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-1 font-bold text-slate-400 truncate">
+                          <span className="material-symbols-outlined text-slate-300 text-xs shrink-0" style={{ fontSize: '12px' }}>mail</span>
+                          <span className="truncate">{customer.email}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col justify-center items-end bg-slate-50/70 px-2.5 py-1.5 rounded-lg border border-slate-100/50">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px] leading-none mb-1">Chi tiêu</span>
+                        <span className="font-black text-slate-950 text-[11px] leading-none">
+                          {formatCurrency(customer.revenue, true)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: Trading Status & Actions */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 rounded-md border border-slate-200/50 bg-slate-50/10 px-1.5 py-0.5">
+                        <div className={`rounded-full shrink-0 w-1 h-1 ${customer.isTrading ? 'bg-blue-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                        <span className={`font-black uppercase tracking-wider text-[7.5px] ${customer.isTrading ? 'text-blue-600' : 'text-slate-400'}`}>
+                          {customer.isTrading ? 'Đang giao dịch' : 'Ngừng giao dịch'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-0.5">
+                        <ActionButton 
+                          icon="visibility" 
+                          color="text-blue-600 hover:bg-blue-50" 
+                          onClick={() => openDrawer(customer.customerID)} 
+                          title="Chi tiết"
+                        />
+                        <ActionButton 
+                          icon="edit" 
+                          color="text-slate-600 hover:bg-slate-100" 
+                          onClick={() => openEditModal(customer)} 
+                          title="Sửa"
+                        />
+                        <ActionButton 
+                          icon="delete" 
+                          color="text-red-600 hover:bg-red-50" 
+                          onClick={() => openDeleteModal(customer)} 
+                          title="Xóa"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="py-20 text-center">
               <div className="flex flex-col items-center gap-3">
@@ -1034,26 +1118,55 @@ const CustomerList = () => {
  
                  <div className="grid grid-cols-1 gap-6">
                    <div>
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Phân loại / Hạng</label>
-                     <div className="flex bg-slate-50 rounded-xl p-1.5 gap-1 border border-slate-200">
-                       {['VIP', 'GOLD', 'TIÊU CHUẨN'].map((grp) => (
-                         <button 
-                           key={grp}
-                           type="button"
-                           onClick={() => setEditFormData({...editFormData, group: grp})}
-                           className={`flex-1 py-3.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                             editFormData.group === grp 
-                               ? grp === 'VIP' ? 'bg-white text-orange-600 shadow-sm border border-orange-100' 
-                                 : grp === 'GOLD' ? 'bg-white text-yellow-600 shadow-sm border border-yellow-100'
-                                 : 'bg-white text-slate-600 shadow-sm border border-slate-200'
-                               : 'text-slate-400 hover:text-slate-600'
-                           }`}
-                         >
-                           {grp}
-                         </button>
-                       ))}
-                     </div>
-                   </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Loại đối tác</label>
+                          <div className="flex bg-slate-50 rounded-xl p-1.5 gap-1 border border-slate-200">
+                            {['Cá nhân', 'Doanh nghiệp'].map((type) => (
+                              <button 
+                                key={type}
+                                type="button"
+                                onClick={() => setEditFormData({
+                                  ...editFormData, 
+                                  customerType: type,
+                                  companyName: type === 'Doanh nghiệp' ? (editFormData.companyName || editFormData.name) : null
+                                })}
+                                className={`flex-1 py-3.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                  editFormData.customerType === type 
+                                    ? type === 'Doanh nghiệp' ? 'bg-white text-indigo-700 shadow-sm border border-indigo-100' 
+                                      : 'bg-white text-purple-700 shadow-sm border border-purple-100'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Hạng đối tác</label>
+                          <div className="flex bg-slate-50 rounded-xl p-1.5 gap-1 border border-slate-200">
+                            {['VIP', 'GOLD', 'TIÊU CHUẨN'].map((grp) => (
+                              <button 
+                                key={grp}
+                                type="button"
+                                onClick={() => setEditFormData({...editFormData, group: grp})}
+                                className={`flex-1 py-3.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                                  editFormData.group === grp 
+                                    ? grp === 'VIP' ? 'bg-white text-orange-600 shadow-sm border border-orange-100' 
+                                      : grp === 'GOLD' ? 'bg-white text-yellow-600 shadow-sm border border-yellow-100'
+                                      : 'bg-white text-slate-600 shadow-sm border border-slate-200'
+                                    : 'text-slate-400 hover:text-slate-600'
+                                }`}
+                              >
+                                {grp}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                    
                    <div>
                      <label htmlFor="edit_customer_notes" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">Ghi chú đối tác</label>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Drawer, 
   Box, 
@@ -26,12 +26,25 @@ import {
 } from '@mui/icons-material';
 import salesService from '../../services/salesService';
 
+// --- HÀM ĐỊNH DẠNG NGÀY HOẠT ĐỘNG (chỉ hiển thị ngày, DB dùng kiểu DATE) ---
+const formatDate = (dateStr) => {
+  if (!dateStr) return "N/A";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "N/A";
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
   const [tabValue, setTabValue] = useState(0);
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState({ orders: [], quotations: [], invoices: [] });
   const [isTrading, setIsTrading] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const [drawerOpenTime, setDrawerOpenTime] = useState(Date.now());
 
   // States cho tính năng thu gọn thông tin, tìm kiếm và lọc thời gian
   const [infoExpanded, setInfoExpanded] = useState(false);
@@ -64,6 +77,150 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
       }
     }
   }, [open]);
+
+
+
+
+  // --- CÁC HOOKS & TÍNH TOÁN ĐƯỢC ĐẶT TRƯỚC EARLY RETURNS ---
+
+  const totalSpent = history.orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+  // --- HÀM TIỆN ÍCH CHO CUSTOM CALENDAR PICKER ---
+  const getDaysInMonth = (month, year) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month, year) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1;
+  };
+
+  const matchDate = (itemDateStr) => {
+    if (!selectedDate) return true;
+    const itemDate = new Date(itemDateStr);
+    if (selectedDate.isMonthOnly) {
+      return itemDate.getMonth() === selectedDate.month &&
+             itemDate.getFullYear() === selectedDate.year;
+    }
+    return itemDate.getDate() === selectedDate.getDate() &&
+           itemDate.getMonth() === selectedDate.getMonth() &&
+           itemDate.getFullYear() === selectedDate.getFullYear();
+  };
+
+  // 1. Logic lọc Đơn hàng của khách hàng theo selectedDate
+  const filteredOrders = history.orders.filter(order => {
+    const displayID = order.displayID || `ORD-${order.orderID.toString().padStart(3, '0')}`;
+    const matchQuery = displayID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       order.orderID.toString().includes(searchQuery);
+    
+    if (!matchQuery) return false;
+    
+    const correspondingInvoice = history.invoices?.find(inv => inv.orderID === order.orderID);
+    const invoiceDate = correspondingInvoice 
+      ? (correspondingInvoice.createAt || correspondingInvoice.invoiceDate) 
+      : (order.orderDate || order.date);
+
+    return matchDate(invoiceDate);
+  });
+
+  // 2. Logic lọc Báo giá của khách hàng theo selectedDate
+  const filteredQuotations = history.quotations.filter(quo => {
+    const displayID = quo.displayID || `QUO-${quo.quotationID.toString().padStart(3, '0')}`;
+    const matchQuery = displayID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       quo.quotationID.toString().includes(searchQuery);
+    
+    if (!matchQuery) return false;
+    return matchDate(quo.createAt || quo.date);
+  });
+
+  // 3. Hoạt động động được cấu hình tự động từ lịch sử giao dịch thực tế
+  const dynamicActivities = useMemo(() => {
+    const list = [];
+
+    // Tạo hoạt động từ Đơn hàng thực tế
+    history.orders.forEach(order => {
+      const orderTime = order.orderDate || order.date;
+      list.push({
+        title: `Tạo đơn hàng mới #${order.displayID}`,
+        time: formatDate(orderTime),
+        user: "Nhân viên Sale",
+        color: "bg-blue-500",
+        desc: "Đơn hàng",
+        date: new Date(orderTime)
+      });
+
+      if (order.orderStatus === 'DELIVERED') {
+        const deliveryDate = order.deliveryDate ? new Date(order.deliveryDate) : new Date(orderTime);
+        list.push({
+          title: `Đơn hàng #${order.displayID} đã giao thành công`,
+          time: formatDate(deliveryDate),
+          user: "Hệ thống Logistics",
+          color: "bg-emerald-500",
+          desc: "Hoàn thành",
+          date: deliveryDate
+        });
+      } else if (order.orderStatus === 'CANCELLED') {
+        list.push({
+          title: `Đơn hàng #${order.displayID} đã bị hủy bỏ`,
+          time: formatDate(orderTime),
+          user: "Khách hàng",
+          color: "bg-rose-500",
+          desc: "Đã hủy",
+          date: new Date(orderTime)
+        });
+      }
+    });
+
+    // Tạo hoạt động từ Báo giá thực tế
+    history.quotations.forEach(quo => {
+      const quoTime = quo.createAt || quo.date;
+      list.push({
+        title: `Gửi báo giá mới #${quo.displayID}`,
+        time: formatDate(quoTime),
+        user: "Nhân viên Sale",
+        color: "bg-purple-500",
+        desc: "Báo giá",
+        date: new Date(quoTime)
+      });
+    });
+
+    // Tạo hoạt động từ Hóa đơn thực tế
+    history.invoices.forEach(inv => {
+      const invTime = inv.createAt || inv.invoiceDate;
+      const displayInvID = inv.displayID || `INV-${inv.invoiceID.toString().padStart(3, '0')}`;
+      list.push({
+        title: `Phát hành hóa đơn #${displayInvID}`,
+        time: formatDate(invTime),
+        user: "Bộ phận Kế toán",
+        color: "bg-indigo-500",
+        desc: "Hóa đơn",
+        date: new Date(invTime)
+      });
+
+      const invStatus = (inv.status || '').toUpperCase();
+      if (invStatus === 'PAID' || invStatus === 'ĐÃ THANH TOÁN') {
+        list.push({
+          title: `Thanh toán thành công hóa đơn #${displayInvID}`,
+          time: formatDate(invTime),
+          user: "Bộ phận Kế toán",
+          color: "bg-emerald-500",
+          desc: "Thanh toán",
+          date: new Date(invTime)
+        });
+      }
+    });
+
+    // Sắp xếp các hoạt động theo thứ tự thời gian mới nhất lên đầu
+    return list.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [history]);
+
+  const filteredActivities = dynamicActivities.filter(act => {
+    const matchQuery = act.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                       act.user.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchQuery) return false;
+    return matchDate(act.date);
+  });
 
   const fetchCustomerDetails = async () => {
     setLoading(true);
@@ -181,73 +338,7 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
 
   if (!customer) return null;
 
-  const totalSpent = history.orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
-  // --- HÀM TIỆN ÍCH CHO CUSTOM CALENDAR PICKER ---
-  const getDaysInMonth = (month, year) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (month, year) => {
-    // Trả về thứ của ngày đầu tiên trong tháng (0: Chủ Nhật, 1: Thứ 2, ..., 6: Thứ 7)
-    // Để chuyển thành chuẩn T2 - CN: ta lấy thứ, nếu là 0 (Chủ nhật) chuyển thành 6, còn lại trừ đi 1.
-    const day = new Date(year, month, 1).getDay();
-    return day === 0 ? 6 : day - 1;
-  };
-
-  const matchDate = (itemDateStr) => {
-    if (!selectedDate) return true;
-    const itemDate = new Date(itemDateStr);
-    if (selectedDate.isMonthOnly) {
-      return itemDate.getMonth() === selectedDate.month &&
-             itemDate.getFullYear() === selectedDate.year;
-    }
-    return itemDate.getDate() === selectedDate.getDate() &&
-           itemDate.getMonth() === selectedDate.getMonth() &&
-           itemDate.getFullYear() === selectedDate.getFullYear();
-  };
-
-  // 1. Logic lọc Đơn hàng của khách hàng theo selectedDate (dựa vào thời gian tạo hóa đơn)
-  const filteredOrders = history.orders.filter(order => {
-    const displayID = order.displayID || `ORD-${order.orderID.toString().padStart(3, '0')}`;
-    const matchQuery = displayID.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       order.orderID.toString().includes(searchQuery);
-    
-    if (!matchQuery) return false;
-    
-    // Tìm hóa đơn tương ứng với đơn hàng này để lấy thời gian tạo của hóa đơn
-    const correspondingInvoice = history.invoices?.find(inv => inv.orderID === order.orderID);
-    const invoiceDate = correspondingInvoice 
-      ? (correspondingInvoice.createAt || correspondingInvoice.invoiceDate) 
-      : (order.orderDate || order.date);
-
-    return matchDate(invoiceDate);
-  });
-
-  // 2. Logic lọc Báo giá của khách hàng theo selectedDate
-  const filteredQuotations = history.quotations.filter(quo => {
-    const displayID = quo.displayID || `QUO-${quo.quotationID.toString().padStart(3, '0')}`;
-    const matchQuery = displayID.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       quo.quotationID.toString().includes(searchQuery);
-    
-    if (!matchQuery) return false;
-    return matchDate(quo.createAt || quo.date);
-  });
-
-  // 3. Mock data hoạt động có hỗ trợ lọc theo selectedDate
-  const activities = [
-    { title: "Đã cập nhật thông tin", time: "2 giờ trước", user: "Sales Admin", icon: <PersonIcon sx={{ fontSize: 14 }} />, date: new Date() },
-    { title: "Tạo đơn hàng mới #ORD-125", time: "1 ngày trước", user: "Nguyễn Văn A", icon: <ReceiptIcon sx={{ fontSize: 14 }} />, color: "bg-blue-500", date: new Date(Date.now() - 86400000) },
-    { title: "Gửi báo giá #QUO-089", time: "3 ngày trước", user: "Nguyễn Văn A", icon: <QuotationIcon sx={{ fontSize: 14 }} />, color: "bg-purple-500", date: new Date(Date.now() - 3 * 86400000) },
-  ];
-  
-  const filteredActivities = activities.filter(act => {
-    const matchQuery = act.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       act.user.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (!matchQuery) return false;
-    return matchDate(act.date);
-  });
 
   return (
     <Drawer 
@@ -829,21 +920,23 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
           )}
 
           {tabValue === 2 && (
-            <Box className="flex flex-col gap-4 relative pl-6 before:content-[''] before:absolute before:left-[11px] before:top-0 before:bottom-0 before:w-0.5 before:bg-slate-100 max-h-[190px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-              {filteredActivities.length > 0 ? (
-                filteredActivities.map((act, idx) => (
-                  <ActivityItem 
-                    key={idx}
-                    title={act.title} 
-                    time={act.time} 
-                    user={act.user} 
-                    icon={act.icon} 
-                    color={act.color}
-                  />
-                ))
-              ) : (
-                <EmptyState message="Chưa có hoạt động phù hợp" />
-              )}
+            <Box className="bg-white rounded-2xl p-6 shadow-sm border border-slate-300">
+              <Box className="flex flex-col gap-6 relative pl-6 before:content-[''] before:absolute before:left-[11px] before:top-1 before:bottom-1 before:w-0.5 before:bg-slate-100 max-h-[350px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                {filteredActivities.length > 0 ? (
+                  filteredActivities.map((act, idx) => (
+                    <ActivityItem 
+                      key={idx}
+                      title={act.title} 
+                      time={act.time} 
+                      user={act.user} 
+                      color={act.color}
+                      desc={act.desc}
+                    />
+                  ))
+                ) : (
+                  <EmptyState message="Chưa có hoạt động phù hợp" />
+                )}
+              </Box>
             </Box>
           )}
         </Box>
@@ -868,10 +961,12 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
   );
 };
  
-const ActivityItem = ({ title, time, user, icon, color = 'bg-slate-400' }) => (
+const ActivityItem = ({ title, time, user, icon, color = 'bg-slate-400', desc }) => (
   <Box className="relative font-inter">
     <div className={`absolute -left-[20px] top-1.5 w-2.5 h-2.5 rounded-full ${color} border-2 border-white ring-4 ring-slate-50 z-10`}></div>
-    <Typography className="text-xs font-black text-slate-800 leading-none mb-1.5 font-inter">{title}</Typography>
+    <Typography className="text-xs font-black text-slate-800 leading-none mb-1.5 font-inter">
+      {title} {desc && <span className={`ml-1 px-1.5 py-0.5 rounded text-[9px] text-white ${color}`}>{desc}</span>}
+    </Typography>
     <Box className="flex gap-2 items-center">
       <span className="text-[10px] text-slate-400 font-bold font-inter">{time}</span>
       <div className="w-1 h-1 rounded-full bg-slate-300"></div>

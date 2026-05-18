@@ -58,7 +58,6 @@ function App() {
         <Route path="staffs" element={<StaffManagement />} />
         <Route path="staffs/add" element={<StaffCreate />} />
         <Route path="products" element={<ProductManagement />} />
-        <Route path="products/add" element={<AddProduct />} />
         <Route path="categories" element={<CategoryManagement />} />
         <Route path="categories/add" element={<AddCategory />} />
       </Route>
@@ -69,8 +68,6 @@ function App() {
         <Route path="customers" element={<CustomerList />} />
         <Route path="customers/add" element={<CustomerCreate />} />
         <Route path="products" element={<ProductManagement />} />
-        <Route path="products/add" element={<AddProduct />} />
-        <Route path="products/edit/:id" element={<AddProduct />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="prices" element={<PriceManagement />} />
         <Route path="prices/add" element={<PriceCreate />} />
