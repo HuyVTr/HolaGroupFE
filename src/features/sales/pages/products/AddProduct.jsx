@@ -23,7 +23,7 @@ const AddProduct = () => {
   const [salePrice, setSalePrice] = useState('');
   const [importPrice, setImportPrice] = useState('');
   const [stock, setStock] = useState('0');
-  const [addStock, setAddStock] = useState('0');
+  const [adjustmentStock, setAdjustmentStock] = useState('0');
   const [lowStockAlert, setLowStockAlert] = useState('10');
   const [categoryID, setCategoryID] = useState('');
   const [unit, setUnit] = useState('m2');
@@ -168,10 +168,6 @@ const AddProduct = () => {
       showToastMsg('Số lượng tồn kho ban đầu không được nhỏ hơn 0!', 'error');
       return;
     }
-    if (isEditMode && addStock !== '' && (isNaN(Number(addStock)) || Number(addStock) < 0)) {
-      showToastMsg('Số lượng tồn kho cộng thêm không được nhỏ hơn 0!', 'error');
-      return;
-    }
     if (lowStockAlert !== '' && (isNaN(Number(lowStockAlert)) || Number(lowStockAlert) < 0)) {
       showToastMsg('Ngưỡng cảnh báo tồn kho không được nhỏ hơn 0!', 'error');
       return;
@@ -197,9 +193,15 @@ const AddProduct = () => {
       }
 
       // 2. Tạo dữ liệu lưu trữ chuẩn
-      const finalStock = isEditMode
-        ? Number(stock || 0) + Number(addStock || 0)
-        : Number(stock || 0);
+      let finalStock = Number(stock) || 0;
+      if (isEditMode) {
+        finalStock = (Number(stock) || 0) + (Number(adjustmentStock) || 0);
+        if (finalStock < 0) {
+          showToastMsg('Số lượng tồn kho sau điều chỉnh không được nhỏ hơn 0!', 'error');
+          setLoading(false);
+          return;
+        }
+      }
 
       const payload = {
         productName: productName.trim(),
@@ -251,11 +253,11 @@ const AddProduct = () => {
           <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">
             {isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-2 font-medium">
-            Hệ thống đang 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in">
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Hệ thống đang{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
               {isEditMode ? 'chỉnh sửa dữ liệu' : 'sẵn sàng thiết lập'}
-            </span>
+            </span>{" "}
             thông tin hàng hóa & quy chuẩn kho vận
           </p>
         </div>
@@ -388,61 +390,78 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              <div className={`grid grid-cols-1 ${isEditMode ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-8`}>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">
-                    {isEditMode ? 'Số lượng tồn kho hiện tại' : 'Số lượng tồn kho ban đầu'}
-                  </label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={stock}
-                    disabled={isEditMode}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val !== '' && Number(val) < 0) return;
-                      setStock(val);
-                    }}
-                    className={`w-full border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all ${
-                      isEditMode 
-                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-dashed border-slate-200' 
-                        : 'bg-slate-50 text-slate-700'
-                    }`} 
-                  />
-                </div>
-
-                {isEditMode && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#00288E] uppercase tracking-[0.2em] ml-1">Nhập thêm kho (+)</label>
-                    <input 
-                      type="number" 
-                      min="0"
-                      value={addStock}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val !== '' && Number(val) < 0) return;
-                        setAddStock(val);
-                      }}
-                      placeholder="0"
-                      className="w-full bg-blue-50/50 border-2 border-blue-100 rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-300 focus:bg-white transition-all text-[#00288E] placeholder-blue-300" 
-                    />
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {isEditMode ? (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Số lượng tồn kho hiện tại (Khóa)</label>
+                      <input 
+                        type="number" 
+                        disabled
+                        value={stock}
+                        className="w-full bg-slate-100 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none text-slate-400 cursor-not-allowed" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#00288E] uppercase tracking-[0.2em] ml-1">Nhập / Xuất kho điều chỉnh (+/-)</label>
+                      <input 
+                        type="number" 
+                        value={adjustmentStock}
+                        onChange={(e) => setAdjustmentStock(e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-blue-50/30 border-2 border-blue-100 rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-400 focus:bg-white transition-all text-slate-700" 
+                      />
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight ml-1 leading-normal">
+                        Điền số dương để cộng thêm, điền số âm để trừ bớt (VD: +25 hoặc -10)
+                      </p>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Ngưỡng cảnh báo tồn kho</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={lowStockAlert}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== '' && Number(val) < 0) return;
+                          setLowStockAlert(val);
+                        }}
+                        className="w-full bg-slate-50 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all text-slate-700" 
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Số lượng tồn kho ban đầu</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={stock}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== '' && Number(val) < 0) return;
+                          setStock(val);
+                        }}
+                        className="w-full bg-slate-50 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all text-slate-700" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Ngưỡng cảnh báo tồn kho</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        value={lowStockAlert}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== '' && Number(val) < 0) return;
+                          setLowStockAlert(val);
+                        }}
+                        className="w-full bg-slate-50 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all text-slate-700" 
+                      />
+                    </div>
+                  </>
                 )}
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Ngưỡng cảnh báo tồn kho</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={lowStockAlert}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val !== '' && Number(val) < 0) return;
-                      setLowStockAlert(val);
-                    }}
-                    className="w-full bg-slate-50 border-2 border-transparent rounded-xl p-4 text-sm font-bold outline-none focus:border-blue-100 focus:bg-white transition-all text-slate-700" 
-                  />
-                </div>
               </div>
             </div>
           </div>

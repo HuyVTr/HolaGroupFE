@@ -181,6 +181,21 @@ const salesService = {
         orders = orders.filter(o => Number(o.userID) === Number(activeUserID));
       }
 
+      // Load all orderItems and products for mapping
+      const apiOrderItems = dbData.orderItems || [];
+      const localOrderItems = JSON.parse(localStorage.getItem('added_order_items') || '[]');
+      const allOrderItems = [...localOrderItems, ...apiOrderItems];
+
+      // Load products for lookup
+      const apiProds = dbData.products || [];
+      const localProds = getLocalProducts();
+      const allProducts = [...localProds, ...apiProds];
+      
+      const productMap = {};
+      allProducts.forEach(p => {
+        productMap[p.productID] = p;
+      });
+
       return orders.map(order => {
         const customer = customers.find(c => c.customerID === order.customerID);
         const displayID = formatDisplayCode(order.orderID, 'ORD');
@@ -189,12 +204,45 @@ const salesService = {
         const rawTotal = Number(order.totalAmount) || 0;
         const totalWithVAT = rawTotal * 1.1; // Giả định thuế 10% như bên Kế toán
 
+        // Phân tích và chuẩn hóa danh sách sản phẩm (items) của đơn hàng
+        let orderItemsMapped = [];
+        if (order.items && Array.isArray(order.items)) {
+          // Đối với đơn hàng mới tạo từ LocalStorage đã có sẵn items
+          orderItemsMapped = order.items.map(item => {
+            const product = productMap[item.productID];
+            return {
+              productID: item.productID,
+              name: item.productName || item.name || 'Sản phẩm',
+              quantity: Number(item.quantity) || 1,
+              price: Number(item.unitPrice || item.price) || 0,
+              icon: item.icon || '📦',
+              imageURL: product ? (product.imageURL || product.image || '') : (item.imageURL || '')
+            };
+          });
+        } else {
+          // Đối với đơn hàng mock ban đầu trong db.json, lọc từ bảng orderItems liên kết
+          const itemsFromDB = allOrderItems.filter(item => Number(item.orderID) === Number(order.orderID));
+          orderItemsMapped = itemsFromDB.map(item => {
+            const product = productMap[item.productID];
+            return {
+              productID: item.productID,
+              name: product ? product.productName : `Sản phẩm ID ${item.productID}`,
+              quantity: Number(item.quantity) || 1,
+              price: Number(item.unitPrice || item.price || (product ? product.salePrice : 0)) || 0,
+              icon: '📦',
+              imageURL: product ? (product.imageURL || product.image || '') : ''
+            };
+          });
+        }
+
         return {
           ...order,
           displayID,
           totalAmount: totalWithVAT,
           customerName: customer ? (customer.companyName || `${customer.lastName} ${customer.firstName}`) : (order.customerName || 'Khách hàng lẻ'),
-          date: (order.orderDate || order.date) ? new Date(order.orderDate || order.date).toLocaleDateString('vi-VN') : 'N/A'
+          customerPhone: customer?.phoneNumber || order.customerPhone || 'N/A',
+          date: (order.orderDate || order.date) ? new Date(order.orderDate || order.date).toLocaleDateString('vi-VN') : 'N/A',
+          items: orderItemsMapped
         };
       }).sort((a, b) => {
         const dateA = new Date(a.orderDate || a.date);
@@ -307,8 +355,16 @@ const salesService = {
   // Lấy danh sách danh mục
   getCategories: async () => {
     if (USE_MOCK) return dbData.categories || [];
-    const response = await api.get('/categories');
-    return response.data;
+    try {
+      const response = await api.get('/categories');
+      if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+        return response.data;
+      }
+      return dbData.categories || [];
+    } catch (e) {
+      console.warn("Failed to fetch categories from API, falling back to mock:", e);
+      return dbData.categories || [];
+    }
   },
 
   // Lấy danh sách báo giá
@@ -674,6 +730,36 @@ const salesService = {
       };
 
       localStorage.setItem('added_orders', JSON.stringify([newOrder, ...local]));
+
+      // ─── ĐỒNG BỘ LIÊN PHÂN HỆ: Tự động sinh Hóa đơn (Invoice) tương ứng bên Kế toán ───
+      try {
+        const localInvoices = getLocalInvoices();
+        const apiInvoices = dbData.invoices || [];
+        const allInvoices = [...localInvoices, ...apiInvoices];
+        const maxInvoiceId = allInvoices.reduce((max, inv) => Math.max(max, Number(inv.invoiceID) || 0), 0);
+        
+        // Hạn thanh toán sau 30 ngày theo quy định
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 30);
+        
+        const newInvoice = {
+          invoiceID: maxInvoiceId + 1,
+          invoiceDate: newOrder.orderDate,
+          dueDate: dueDate.toISOString().split('T')[0],
+          totalAmount: Number(newOrder.totalAmount) * 1.1, // Tổng tiền đã cộng thuế 10%
+          paidAmount: 0,
+          status: 'PENDING',
+          createAt: newOrder.orderDate,
+          orderID: newOrder.orderID,
+          userID: newOrder.userID
+        };
+
+        localStorage.setItem('added_invoices', JSON.stringify([newInvoice, ...localInvoices]));
+        console.log("Đã đồng bộ hóa đơn tương ứng bên Kế toán thành công:", newInvoice);
+      } catch (err) {
+        console.error("Lỗi khi đồng bộ tự động hóa đơn bên Kế toán:", err);
+      }
+
       return newOrder;
     }
     const response = await api.post('/api/orders', orderData);

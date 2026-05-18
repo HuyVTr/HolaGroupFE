@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import salesService from '../../services/salesService';
+import ProductDetailDrawer from '../../components/Drawers/ProductDetailDrawer';
 
 const formatCurrency = (val, isSmall = false, isStat = false) => {
   if (val === undefined || val === null) return "0 VND";
@@ -45,8 +46,16 @@ const extractIdNumber = (idVal) => {
   return 0;
 };
 
-const getResponsiveValueClass = (val) => {
-  const str = String(val || '');
+const getResponsiveValueClass = (val, rawVal) => {
+  let str = '';
+  if (rawVal !== undefined && rawVal !== null) {
+    str = String(rawVal);
+    if (typeof rawVal === 'number') {
+      str += ' VND..';
+    }
+  } else if (val) {
+    str = String(val);
+  }
   const len = str.length;
   if (len <= 10) {
     return "text-base sm:text-lg lg:text-lg xl:text-xl";
@@ -59,6 +68,20 @@ const getResponsiveValueClass = (val) => {
   }
 };
 
+const mapProductStatus = (status) => {
+  switch (status) {
+    case 'Còn hàng':
+      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    case 'Sắp hết':
+      return 'bg-orange-50 text-orange-600 border-orange-100';
+    case 'Hết hàng':
+      return 'bg-rose-50 text-rose-600 border-rose-100';
+    case 'Ngừng kinh doanh':
+    default:
+      return 'bg-slate-50 text-slate-500 border-slate-100';
+  }
+};
+
 const ProductManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +91,17 @@ const ProductManagement = () => {
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [isOpenCategoryDropdown, setIsOpenCategoryDropdown] = useState(false);
+
+  const filteredCategoryOptions = useMemo(() => {
+    const allOptions = ['Tất cả', ...categories.map(c => c.categoryName)];
+    if (!categorySearchQuery) return allOptions;
+    return allOptions.filter(opt => 
+      opt.toLowerCase().includes(categorySearchQuery.toLowerCase())
+    );
+  }, [categories, categorySearchQuery]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
@@ -108,14 +142,26 @@ const ProductManagement = () => {
 
         const mapped = productsData.map(p => {
           const cat = categoriesData.find(c => c.categoryID === p.categoryID);
+          const stock = p.stock !== undefined ? p.stock : [120, 0, 15, 340][p.productID % 4];
+          
+          let displayStatus = 'Còn hàng';
+          if (p.status !== 'ACTIVE') {
+            displayStatus = 'Ngừng kinh doanh';
+          } else if (stock === 0) {
+            displayStatus = 'Hết hàng';
+          } else if (stock < 20) {
+            displayStatus = 'Sắp hết';
+          }
+
           return {
             id: `PRD-${p.productID.toString().padStart(3, '0')}`,
             productID: p.productID,
             name: p.productName,
             category: cat ? cat.categoryName : 'Khác',
             price: p.salePrice,
-            stock: p.stock !== undefined ? p.stock : Math.floor(Math.random() * 200), // Mock stock fallback
-            status: p.status === 'ACTIVE' ? 'Còn hàng' : 'Ngừng kinh doanh',
+            stock,
+            unit: p.unit || 'cái',
+            status: displayStatus,
             imageURL: p.imageURL || p.image || ''
           };
         });
@@ -129,10 +175,17 @@ const ProductManagement = () => {
     fetchData();
   }, []);
 
-  // --- 2. TRẠNG THÁI MODAL & TOAST ---
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [targetProduct, setTargetProduct] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [drawerProduct, setDrawerProduct] = useState(null);
+
+  const handleRowClick = (product) => {
+    setDrawerProduct(product);
+    setIsDrawerOpen(true);
+  };
 
   const showToastMsg = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -205,7 +258,6 @@ const ProductManagement = () => {
     const inventoryValue = products.reduce((sum, p) => sum + (p.price * p.stock), 0);
     const categoryCount = categories.length;
 
-    // SKU Growth (Tăng trưởng)
     const skuPrev = totalSKU > 0 ? Math.max(0, totalSKU - 1) : 0;
     const skuPercent = skuPrev > 0 ? Math.round(((totalSKU - skuPrev) / skuPrev) * 100) : (totalSKU > 0 ? 100 : 0);
     const skuGrowth = { 
@@ -215,7 +267,6 @@ const ProductManagement = () => {
       label: 'So với tháng trước' 
     };
 
-    // Cảnh báo tồn kho ít (Giảm sút - dấu hiệu tích cực)
     const lowStockPrev = lowStock + 2; 
     const lowStockPercent = lowStockPrev > 0 ? Math.round((Math.abs(lowStockPrev - lowStock) / lowStockPrev) * 100) : 0;
     const lowStockGrowth = { 
@@ -225,7 +276,6 @@ const ProductManagement = () => {
       label: 'So với hôm qua' 
     };
 
-    // Giá trị tồn kho (Tăng trưởng)
     const valuePrev = Math.round(inventoryValue * 0.9);
     const valuePercent = valuePrev > 0 ? Math.round(((inventoryValue - valuePrev) / valuePrev) * 100) : (inventoryValue > 0 ? 100 : 0);
     const valueGrowth = { 
@@ -235,7 +285,6 @@ const ProductManagement = () => {
       label: 'So với tháng trước' 
     };
 
-    // Danh mục (Không đổi)
     const categoryGrowth = { 
       percent: 0, 
       isUp: true, 
@@ -265,55 +314,41 @@ const ProductManagement = () => {
   }
 
   return (
-    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
+    <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6 overflow-hidden">
       
       {/* 1. Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 px-2 md:px-0">
-        <div className="space-y-1">
-          <h1 className="font-black text-slate-900 uppercase tracking-tight leading-tight"
-              style={{ fontSize: 'clamp(20px, 1.8vw, 32px)' }}>Quản lý sản phẩm</h1>
-          <p className="text-slate-500 flex items-center gap-2 font-medium"
-             style={{ fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
-            Hệ thống đang lưu trữ 
-            <span className="text-[#00288E] font-bold bg-blue-50 px-2.5 py-1 rounded-lg animate-fade-in">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý sản phẩm</h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+            Hệ thống đang lưu trữ{" "}
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
               {products.length} mã SKU
-            </span>
+            </span>{" "}
             thuộc {categories.length} danh mục
           </p>
         </div>
         
         <div className="flex gap-3" style={{ gap: 'clamp(8px, 0.8vw, 16px)' }}>
-          <button 
-            className="bg-white border-2 border-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-600 transition-all flex items-center active:scale-95"
-            style={{
-              padding: 'clamp(8px, 0.9vw, 16px) clamp(16px, 1.8vw, 32px)',
-              fontSize: 'clamp(9px, 0.75vw, 12px)',
-              borderRadius: 'clamp(8px, 0.9vw, 16px)',
-              gap: 'clamp(6px, 0.6vw, 12px)'
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>download</span>
-            Xuất dữ liệu
-          </button>
-          
-          <button 
-            onClick={() => navigate(`${basePath}/products/add`)}
-            className="group flex items-center justify-center bg-[#00288E] hover:bg-white text-white hover:text-[#00288E] rounded-2xl font-black uppercase tracking-widest transition-all duration-300 shadow-lg shadow-blue-900/10 border-2 border-[#00288E] active:scale-95"
-            style={{
-              padding: 'clamp(8px, 0.9vw, 16px) clamp(20px, 2.2vw, 40px)',
-              fontSize: 'clamp(9px, 0.75vw, 12px)',
-              borderRadius: 'clamp(8px, 0.9vw, 16px)',
-              gap: 'clamp(6px, 0.6vw, 12px)'
-            }}
-          >
-            <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-500" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>add_circle</span>
-            Thêm sản phẩm mới
-          </button>
+          {basePath === '/admin' && (
+            <button 
+              className="bg-white border-2 border-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-600 transition-all flex items-center active:scale-95 shadow-sm"
+              style={{
+                padding: 'clamp(8px, 0.9vw, 16px) clamp(16px, 1.8vw, 32px)',
+                fontSize: 'clamp(9px, 0.75vw, 12px)',
+                borderRadius: 'clamp(8px, 0.9vw, 16px)',
+                gap: 'clamp(6px, 0.6vw, 12px)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>download</span>
+              Xuất dữ liệu
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 2. Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2 md:px-0">
+      {/* 2. Stats Grid - Động hóa 4 cột trên iPad/Tablet và 2 cột trên Mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2 md:px-0 shrink-0">
             <StatCard 
               label="GIÁ TRỊ KHO" 
               value={formatCurrency(stats.inventoryValue, false, true)} 
@@ -358,46 +393,125 @@ const ProductManagement = () => {
             />
       </div>
 
-      {/* 3. Separated Filter & Search Bar */}
-      <div className="bg-white rounded-xl sm:rounded-2xl p-6 border border-slate-300 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 mx-2 md:mx-0 hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300">
-            <div className="relative w-full lg:w-[400px] group order-2 lg:order-1">
+      {/* 3. Separated Filter & Search Bar - Phân chia side-by-side trên iPad và xếp chồng trên Mobile */}
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-300 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 mx-2 md:mx-0 hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 shrink-0">
+            <div className="relative w-full md:w-[350px] lg:w-[400px] group order-2 md:order-1">
               <input 
                 type="text" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Tìm tên sản phẩm, SKU, danh mục..." 
-                className="w-full bg-slate-50 border-2 border-slate-200 text-sm font-bold rounded-xl pl-12 pr-4 py-4 outline-none focus:bg-white focus:border-[#00288E] transition-all text-slate-700 placeholder:text-slate-300"
+                className="w-full bg-slate-50 border-2 border-slate-200 text-sm font-bold rounded-xl pl-12 pr-4 py-3 sm:py-4 outline-none focus:bg-white focus:border-[#00288E] transition-all text-slate-700 placeholder:text-slate-300"
               />
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#00288E] transition-colors font-bold">search</span>
             </div>
 
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl border border-slate-300/50 shadow-inner w-full lg:w-auto overflow-x-auto no-scrollbar order-1 lg:order-2">
-              {['Tất cả', ...categories.map(c => c.categoryName)].slice(0, 6).map(cat => (
-                <button 
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${
-                    selectedCategory === cat 
-                      ? 'bg-white text-blue-600 border-slate-200 shadow-sm' 
-                      : 'bg-transparent text-slate-500 border-transparent hover:text-slate-900'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* Bộ lọc danh mục kiểu Dropdown cao cấp */}
+            <div className="relative w-full md:w-64 lg:w-72 order-1 md:order-2">
+              <button
+                type="button"
+                onClick={() => setIsOpenCategoryDropdown(!isOpenCategoryDropdown)}
+                className="w-full bg-slate-50 border-2 border-slate-200 hover:border-[#00288E] transition-all rounded-xl px-4 py-3 sm:py-4 flex items-center justify-between shadow-sm active:scale-95 cursor-pointer text-slate-700 focus:bg-white focus:border-[#00288E]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-400 font-bold" style={{ fontSize: '18px' }}>category</span>
+                  <span className="text-xs font-black uppercase tracking-wider truncate max-w-[120px] sm:max-w-none">
+                    {selectedCategory === 'Tất cả' ? 'Tất cả danh mục' : selectedCategory}
+                  </span>
+                </div>
+                <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isOpenCategoryDropdown ? 'rotate-180' : ''}`} style={{ fontSize: '18px' }}>
+                  keyboard_arrow_down
+                </span>
+              </button>
+
+              {isOpenCategoryDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-20" 
+                    onClick={() => {
+                      setIsOpenCategoryDropdown(false);
+                      setCategorySearchQuery('');
+                    }}
+                  />
+                  
+                  <div className="absolute right-0 top-full mt-2 w-full sm:w-[460px] bg-white border-2 border-slate-200 rounded-3xl shadow-2xl z-30 overflow-hidden flex flex-col max-h-[380px] animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#00288E] opacity-80">CHỌN DANH MỤC</span>
+                      
+                      <div className="relative w-40 sm:w-48 group">
+                        <input
+                          type="text"
+                          value={categorySearchQuery}
+                          onChange={(e) => setCategorySearchQuery(e.target.value)}
+                          placeholder="Tìm nhanh..."
+                          className="w-full bg-slate-100 border border-slate-200 text-[10px] sm:text-xs font-bold rounded-xl pl-8 pr-6 py-2 outline-none focus:bg-white focus:border-blue-600 transition-all text-slate-700 placeholder:text-slate-300"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-300 text-sm font-bold">search</span>
+                        {categorySearchQuery && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCategorySearchQuery('');
+                            }}
+                            className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600 text-sm font-bold flex items-center justify-center"
+                          >
+                            close
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="overflow-y-auto p-4 flex-1 scrollbar-thin scrollbar-thumb-slate-200 max-h-[190px]">
+                      {filteredCategoryOptions.length === 0 ? (
+                        <div className="py-8 text-center text-xs font-bold text-slate-400 italic">
+                          Không tìm thấy danh mục
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {filteredCategoryOptions.map((option) => {
+                            const isSelected = selectedCategory === option;
+                            return (
+                              <button
+                                key={option}
+                                type="button"
+                                title={option}
+                                onClick={() => {
+                                  setSelectedCategory(option);
+                                  setIsOpenCategoryDropdown(false);
+                                  setCategorySearchQuery('');
+                                }}
+                                className={`px-3 py-3.5 rounded-2xl text-[9px] sm:text-xs font-bold uppercase tracking-wider text-center transition-all flex items-center justify-center min-h-[48px] leading-tight active:scale-95 cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 font-black'
+                                    : 'bg-slate-50/50 hover:bg-blue-50 text-slate-500 hover:text-blue-600'
+                                }`}
+                              >
+                                <span className="truncate max-w-full">{option}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
       </div>
 
-      {/* 4. Table Area Container */}
+      {/* 4. Responsive Product List & Table View */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 overflow-hidden mx-2 md:mx-0 flex-1 min-h-0">
-            {/* Table Area */}
-            <div className="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200">
-              <table className="w-full text-left border-collapse">
+            
+            {/* View A: TABLE VIEW (Chỉ hiển thị trên Desktop >= 1024px) */}
+            <div className="hidden lg:block overflow-x-auto overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-slate-200" style={{ scrollbarGutter: 'stable' }}>
+              <table className="w-full table-fixed text-left border-collapse">
                 <thead className="bg-slate-50 sticky top-0 z-10">
                   <tr>
                     <th 
                       onClick={() => handleSort('id')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group w-[40%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -409,7 +523,7 @@ const ProductManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('category')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -421,7 +535,7 @@ const ProductManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('price')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -433,7 +547,7 @@ const ProductManagement = () => {
                     </th>
                     <th 
                       onClick={() => handleSort('stock')} 
-                      className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group"
+                      className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 cursor-pointer hover:text-[#00288E] transition-colors group w-[15%]"
                       style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}
                     >
                       <div className="flex items-center gap-1">
@@ -443,14 +557,13 @@ const ProductManagement = () => {
                         </span>
                       </div>
                     </th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
-                    <th className="px-4 sm:px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 text-right" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Thao tác</th>
+                    <th className="px-6 py-4 font-black text-slate-400 uppercase tracking-widest border-b border-slate-300 w-[15%]" style={{ fontSize: 'clamp(8px, 0.8vw, 11px)' }}>Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {paginatedProducts.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-8 py-20 text-center">
+                      <td colSpan={5} className="px-8 py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <span className="material-symbols-outlined text-4xl text-slate-200">inventory_2</span>
                           <p className="text-xs font-bold text-slate-300 uppercase tracking-widest italic">Không tìm thấy sản phẩm nào</p>
@@ -458,10 +571,14 @@ const ProductManagement = () => {
                       </td>
                     </tr>
                   ) : paginatedProducts.map((product, index) => (
-                    <tr key={index} className="group hover:bg-slate-50/50 transition-all cursor-pointer">
+                    <tr 
+                      key={index} 
+                      className="group hover:bg-slate-50/50 transition-all cursor-pointer"
+                      onClick={() => handleRowClick(product)}
+                    >
                       <td className="px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         <div className="flex items-center gap-4">
-                          <div className="rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase shadow-sm group-hover:scale-110 transition-transform overflow-hidden"
+                          <div className="rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase shadow-sm group-hover:scale-110 transition-transform overflow-hidden shrink-0"
                                style={{ width: 'clamp(32px, 2.5vw, 44px)', height: 'clamp(32px, 2.5vw, 44px)', fontSize: 'clamp(10px, 0.9vw, 14px)' }}>
                             {product.imageURL ? (
                               <img src={product.imageURL} className="w-full h-full object-cover" alt={product.name} />
@@ -487,43 +604,20 @@ const ProductManagement = () => {
                         {formatCurrency(product.price, true)}
                       </td>
                       <td className="px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-20 sm:w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
-                            <div 
-                              className={`h-full rounded-full ${product.stock < 20 ? 'bg-orange-500' : 'bg-blue-600'}`} 
-                              style={{ width: `${Math.min(100, (product.stock / 200) * 100)}%` }}
-                            ></div>
-                          </div>
-                          <span className="font-black text-slate-700" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{product.stock}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-black text-slate-800" style={{ fontSize: 'clamp(11px, 0.9vw, 14px)' }}>
+                            {product.stock.toLocaleString('vi-VN')}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                            /{product.unit}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className={`inline-block rounded-lg font-black uppercase tracking-tighter border ${
-                          product.status === 'Còn hàng' 
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-100' 
-                            : 'bg-rose-50 text-rose-600 border-rose-100'
-                        }`}
+                        <span className={`inline-block rounded-lg font-black uppercase tracking-tighter border ${mapProductStatus(product.status)}`}
                               style={{ fontSize: 'clamp(8px, 0.75vw, 9px)', padding: 'clamp(2px, 0.4vw, 4px) clamp(6px, 0.8vw, 12px)' }}>
                           {product.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-right" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={() => navigate(`${basePath}/products/edit/${product.productID}`)}
-                            className="rounded-xl bg-slate-50 text-slate-300 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center active:scale-95"
-                            style={{ width: 'clamp(28px, 2.5vw, 40px)', height: 'clamp(28px, 2.5vw, 40px)' }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.3vw, 20px)' }}>edit</span>
-                          </button>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setTargetProduct(product); setShowDeleteModal(true); }}
-                            className="rounded-xl bg-slate-50 text-slate-300 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center active:scale-95"
-                            style={{ width: 'clamp(28px, 2.5vw, 40px)', height: 'clamp(28px, 2.5vw, 40px)' }}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: 'clamp(14px, 1.3vw, 20px)' }}>delete</span>
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -531,18 +625,118 @@ const ProductManagement = () => {
               </table>
             </div>
 
-            {/* Pagination */}
+            {/* View B: CARD LIST VIEW (Tối ưu hóa tuyệt hảo cho Mobile & iPad Mini/Air/Pro-portrait < 1024px) */}
+            <div className="block lg:hidden overflow-auto flex-1 p-4 bg-slate-50/50 scrollbar-thin scrollbar-thumb-slate-200">
+              
+              {/* Thanh sắp xếp thông minh khi ở chế độ card */}
+              <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sắp xếp theo</span>
+                <div className="flex gap-1.5 flex-wrap">
+                  {[
+                    { key: 'id', label: 'SKU' },
+                    { key: 'name', label: 'Tên' },
+                    { key: 'price', label: 'Giá' },
+                    { key: 'stock', label: 'Tồn' }
+                  ].map(item => {
+                    const isSelected = sortConfig.key === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        onClick={() => handleSort(item.key)}
+                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1 active:scale-95 ${
+                          isSelected 
+                            ? 'bg-[#00288E] text-white shadow-md shadow-blue-900/10' 
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                      >
+                        {item.label}
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-[11px] font-bold">
+                            {sortConfig.direction === 'asc' ? 'expand_less' : 'expand_more'}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {paginatedProducts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <span className="material-symbols-outlined text-4xl text-slate-200">inventory_2</span>
+                  <p className="text-xs font-bold text-slate-300 uppercase tracking-widest italic">Không tìm thấy sản phẩm nào</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {paginatedProducts.map((product, index) => (
+                    <div 
+                      key={index}
+                      onClick={() => handleRowClick(product)}
+                      className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#00288E] hover:shadow-xl transition-all duration-300 cursor-pointer active:scale-98 flex flex-col justify-between h-full group"
+                    >
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black uppercase shadow-sm group-hover:scale-105 transition-transform overflow-hidden shrink-0 border border-slate-100">
+                          {product.imageURL ? (
+                            <img src={product.imageURL} className="w-full h-full object-cover" alt={product.name} />
+                          ) : (
+                            <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>image</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-black text-slate-900 uppercase tracking-tight text-xs sm:text-sm line-clamp-2 leading-tight group-hover:text-[#00288E] transition-colors">
+                            {product.name}
+                          </div>
+                          <div className="font-bold text-slate-400 uppercase tracking-widest text-[9px] mt-1">
+                            SKU: {product.id}
+                          </div>
+                          <div className="mt-2">
+                            <span className="inline-block bg-slate-100 text-slate-500 font-black rounded-lg border border-slate-200 uppercase tracking-tighter text-[9px] px-2 py-0.5">
+                              {product.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-4 mt-auto flex flex-col gap-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Giá bán</span>
+                          <span>{formatCurrency(product.price, true)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Tồn kho</span>
+                          <div className="flex items-center gap-0.5">
+                            <span className="font-black text-slate-800">{product.stock.toLocaleString('vi-VN')}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">/{product.unit}</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-100/60 pt-3">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Trạng thái</span>
+                          <span className={`rounded-lg font-black uppercase tracking-tighter border text-[9px] px-2.5 py-1 ${mapProductStatus(product.status)}`}>
+                            {product.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Pagination Container - Đồng bộ và định dạng cao cấp */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 bg-slate-50/50">
-              <span>
+              <span className="hidden sm:inline">
                 Hiển thị {filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} -{' '}
                 {Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} / {filteredProducts.length} sản phẩm
+              </span>
+              <span className="sm:hidden">
+                {filteredProducts.length} sản phẩm
               </span>
               {totalPages > 1 && (
                 <div className="flex items-center gap-1">
                   <button 
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
                   >
                     Trước
                   </button>
@@ -550,7 +744,7 @@ const ProductManagement = () => {
                     <button 
                       key={p}
                       onClick={() => setCurrentPage(p)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
                         currentPage === p 
                           ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
                           : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -562,7 +756,7 @@ const ProductManagement = () => {
                   <button 
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
+                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
                   >
                     Sau
                   </button>
@@ -574,26 +768,26 @@ const ProductManagement = () => {
       {/* Modal Xóa */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 border border-slate-200">
+          <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 border border-slate-200">
             <div className="text-center">
-              <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center text-4xl mx-auto mb-6">
-                <span className="material-symbols-outlined text-4xl">delete_forever</span>
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-6">
+                <span className="material-symbols-outlined text-3xl sm:text-4xl">delete_forever</span>
               </div>
-              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Xác nhận xóa?</h2>
-              <p className="text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Xác nhận xóa?</h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
                 Hành động này sẽ gỡ bỏ sản phẩm <span className="text-slate-600">"{targetProduct?.name}"</span> khỏi hệ thống vĩnh viễn.
               </p>
             </div>
-            <div className="flex gap-4 mt-10">
+            <div className="flex gap-4 mt-8 sm:mt-10">
               <button 
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-6 py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 hover:text-slate-600 transition-all active:scale-95"
+                className="flex-1 px-4 py-3 sm:py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 hover:text-slate-600 transition-all active:scale-95"
               >
                 Hủy bỏ
               </button>
               <button 
                 onClick={confirmDeleteProduct}
-                className="flex-1 px-6 py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
+                className="flex-1 px-4 py-3 sm:py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
               >
                 Xác nhận xóa
               </button>
@@ -604,24 +798,30 @@ const ProductManagement = () => {
 
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-10 right-10 z-[100] animate-in slide-in-from-right-10 duration-300">
-          <div className="bg-slate-900 text-white px-8 py-5 rounded-xl shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-xl">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`}>
-              <span className="material-symbols-outlined text-lg">{toast.type === 'error' ? 'close' : 'check'}</span>
+        <div className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 z-[100] animate-in slide-in-from-right-10 duration-300">
+          <div className="bg-slate-900 text-white px-6 py-4 sm:px-8 sm:py-5 rounded-xl shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-xl">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`}>
+              <span className="material-symbols-outlined text-base sm:text-lg">{toast.type === 'error' ? 'close' : 'check'}</span>
             </div>
-            <p className="text-xs font-black uppercase tracking-widest">{toast.message}</p>
+            <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{toast.message}</p>
           </div>
         </div>
       )}
+
+      <ProductDetailDrawer 
+        open={isDrawerOpen} 
+        onClose={() => setIsDrawerOpen(false)} 
+        product={drawerProduct}
+        basePath={basePath}
+        navigate={navigate}
+      />
 
     </div>
   );
 };
 
 const getTooltipClasses = (idx) => {
-  // Left-aligned tooltip: displays on the right, points left
   const leftAlign = "left-full top-0 ml-2.5 origin-top-left";
-  // Right-aligned tooltip: displays on the left, points right
   const rightAlign = "right-full top-0 mr-2.5 origin-top-right";
 
   if (idx === 0) {
@@ -667,7 +867,6 @@ const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltip
         <span>{isUp ? '+' : '-'}{percent}%</span>
       </div>
       
-      {/* Tooltip */}
       <div className={`absolute hidden group-hover:block z-[9999] w-48 animate-fade-in ${tooltipPositionClass} ${isActive ? '!block' : ''}`}>
         <div className="bg-white/95 backdrop-blur-xl text-slate-900 text-[10px] p-3 rounded-xl shadow-2xl border border-slate-300">
           <p className="font-black opacity-50 mb-2 uppercase tracking-[0.1em] text-[9px] border-b border-slate-100 pb-1.5">{label || 'So với kỳ trước'}</p>
@@ -692,7 +891,6 @@ const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltip
             </span>
           </div>
         </div>
-        {/* Mũi tên tooltip */}
         <div className={`w-2 h-2 bg-white rotate-45 absolute top-2.5 shadow-sm ${arrowPositionClass}`}></div>
       </div>
     </div>
